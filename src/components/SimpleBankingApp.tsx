@@ -57,15 +57,43 @@ export default function SimpleBankingApp() {
 
   const loadProfile = async (userId: string) => {
     try {
-      // Using any type to avoid TypeScript errors
       const { data, error } = await (supabase as any)
         .from('profiles')
         .select('role, full_name, email, balance')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+      
+      if (data) {
+        setProfile(data);
+      } else {
+        // Profile doesn't exist yet, create it
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: insertError } = await (supabase as any)
+            .from('profiles')
+            .insert({
+              user_id: userId,
+              email: user.email || '',
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+              role: 'CLIENT',
+            });
+
+          if (!insertError) {
+            // Try loading again
+            const { data: newProfile } = await (supabase as any)
+              .from('profiles')
+              .select('role, full_name, email, balance')
+              .eq('user_id', userId)
+              .single();
+            
+            if (newProfile) {
+              setProfile(newProfile);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     }
@@ -87,17 +115,27 @@ export default function SimpleBankingApp() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`
+          }
         });
         if (error) throw error;
 
         if (data.user) {
-          // Create profile using any type
-          await (supabase as any).from('profiles').insert({
-            user_id: data.user.id,
-            email,
-            full_name: fullName,
-            role: 'CLIENT',
-          });
+          // Create profile - now using proper Supabase client
+          const { error: profileError } = await (supabase as any)
+            .from('profiles')
+            .insert({
+              user_id: data.user.id,
+              email,
+              full_name: fullName,
+              role: 'CLIENT',
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Don't throw here - user is created, profile can be created later
+          }
 
           toast({
             title: "Account created!",
