@@ -1,117 +1,98 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Settings, Shield, DollarSign, Coins, Globe, Bell, Lock } from "lucide-react";
+import { DollarSign, Shield, Settings, Globe } from "lucide-react";
 
 interface SystemSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface SystemConfig {
-  id: string;
-  key: string;
-  value: string;
-  description: string;
-}
-
-export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [configs, setConfigs] = useState<SystemConfig[]>([]);
+const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  // Stablecoin Configuration
+  // Stablecoin Settings
   const [stablecoinSettings, setStablecoinSettings] = useState({
-    enableStablecoins: false,
-    supportedCoins: ['USDC', 'USDT', 'DAI'],
-    defaultStablecoin: 'USDC',
-    conversionFee: '0.5',
-    minStablecoinAmount: '1.00',
-    maxStablecoinAmount: '10000.00',
-    stablecoinWalletAddress: '',
+    enabled: false,
+    supportedCoins: ["USDC", "USDT"],
+    conversionFee: "0.5",
+    minStablecoinAmount: "10.00",
+    maxStablecoinAmount: "50000.00",
+    stablecoinWalletAddress: "",
     autoConversion: false,
   });
 
   // Transaction Limits
   const [transactionLimits, setTransactionLimits] = useState({
-    dailyLimit: '5000.00',
-    monthlyLimit: '50000.00',
-    singleTransactionLimit: '1000.00',
-    kycRequiredAmount: '500.00',
-    agentDailyFundLimit: '500.00',
+    dailyLimit: "10000.00",
+    monthlyLimit: "100000.00",
+    singleTransactionLimit: "5000.00",
+    kycRequiredAmount: "1000.00",
+    agentDailyFundLimit: "25000.00",
     adminUnlimitedFunds: true,
   });
 
   // Security Settings
   const [securitySettings, setSecuritySettings] = useState({
-    require2FA: true,
-    sessionTimeout: '30',
-    maxLoginAttempts: '3',
-    passwordMinLength: '8',
-    requireSpecialChars: true,
-    kycVerificationRequired: true,
+    twoFactorAuth: true,
+    biometricLogin: false,
+    sessionTimeout: true,
+    sessionDuration: "30",
+    maxLoginAttempts: "5",
     ipWhitelisting: false,
-    suspiciousActivityThreshold: '1000.00',
+  });
+
+  // RPC Settings
+  const [rpcSettings, setRpcSettings] = useState({
+    endpoint: "",
+    apiKey: "",
+    network: "mainnet",
+    timeout: "30",
+    maxRetries: "3",
+    sslVerification: true,
+    enabled: false,
   });
 
   // System Settings
   const [systemSettings, setSystemSettings] = useState({
-    systemName: 'Virtual Banking System',
-    supportEmail: 'support@virtualbank.com',
-    defaultCurrency: 'USD',
-    supportedLanguages: ['en', 'es', 'fr'],
-    defaultLanguage: 'en',
+    systemName: "Banking System",
+    timeZone: "UTC",
     maintenanceMode: false,
-    allowNewRegistrations: true,
+    debugMode: false,
     emailNotifications: true,
     smsNotifications: false,
   });
 
-  const loadSystemConfigs = async () => {
-    try {
-      // This would normally load from a system_configs table
-      // For now, we'll use local state
-      toast({
-        title: "Settings Loaded",
-        description: "System configuration loaded successfully",
-      });
-    } catch (error) {
-      console.error('Error loading system configs:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load system configuration",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const saveSettings = async (settingsType: string, settings: any) => {
+  const saveSettings = async (category: string, settings: any) => {
     setLoading(true);
     try {
-      // Here you would typically save to a system_configs table
-      // For now, we'll just show a success message
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
         title: "Settings Saved",
-        description: `${settingsType} settings have been updated successfully`,
+        description: `${category} settings have been updated successfully.`,
       });
     } catch (error) {
-      console.error(`Error saving ${settingsType} settings:`, error);
       toast({
         title: "Error",
-        description: `Failed to save ${settingsType} settings`,
+        description: "Failed to save settings. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -119,85 +100,54 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      loadSystemConfigs();
-    }
-  }, [open]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <Settings className="w-5 h-5 mr-2" />
-            System Settings & Configuration
+            System Settings
           </DialogTitle>
+          <DialogDescription>
+            Configure system-wide settings and parameters
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="stablecoin" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="stablecoin" className="flex items-center">
-              <Coins className="w-4 h-4 mr-2" />
-              Stablecoin
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center">
-              <Shield className="w-4 h-4 mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center">
-              <Globe className="w-4 h-4 mr-2" />
-              System
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="stablecoin">Stablecoin</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="rpc">RPC API</TabsTrigger>
+            <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 
-          {/* Stablecoin Configuration */}
+          {/* Stablecoin Settings */}
           <TabsContent value="stablecoin">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Coins className="w-5 h-5 mr-2" />
+                  <DollarSign className="w-5 h-5 mr-2" />
                   Stablecoin Configuration
                 </CardTitle>
+                <CardDescription>
+                  Configure stablecoin support and conversion settings
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="stablecoin-enabled">Enable Stablecoin Support</Label>
+                  <Switch
+                    id="stablecoin-enabled"
+                    checked={stablecoinSettings.enabled}
+                    onCheckedChange={(checked) =>
+                      setStablecoinSettings(prev => ({ ...prev, enabled: checked }))
+                    }
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="enable-stablecoins">Enable Stablecoin Support</Label>
-                      <Switch
-                        id="enable-stablecoins"
-                        checked={stablecoinSettings.enableStablecoins}
-                        onCheckedChange={(checked) =>
-                          setStablecoinSettings(prev => ({ ...prev, enableStablecoins: checked }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="default-stablecoin">Default Stablecoin</Label>
-                      <Select
-                        value={stablecoinSettings.defaultStablecoin}
-                        onValueChange={(value) =>
-                          setStablecoinSettings(prev => ({ ...prev, defaultStablecoin: value }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                          <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                          <SelectItem value="DAI">Dai (DAI)</SelectItem>
-                          <SelectItem value="BUSD">Binance USD (BUSD)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     <div>
                       <Label htmlFor="conversion-fee">Conversion Fee (%)</Label>
                       <Input
@@ -212,9 +162,7 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                         }
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="min-stablecoin">Minimum Stablecoin Amount ($)</Label>
                       <Input
@@ -242,7 +190,9 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                         }
                       />
                     </div>
+                  </div>
 
+                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="wallet-address">Stablecoin Wallet Address</Label>
                       <Textarea
@@ -252,7 +202,7 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                         onChange={(e) =>
                           setStablecoinSettings(prev => ({ ...prev, stablecoinWalletAddress: e.target.value }))
                         }
-                        rows={2}
+                        rows={3}
                       />
                     </div>
 
@@ -268,8 +218,6 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                     </div>
                   </div>
                 </div>
-
-                <Separator />
 
                 <Button
                   onClick={() => saveSettings('Stablecoin', stablecoinSettings)}
@@ -403,40 +351,34 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="require-2fa">Require 2FA for All Users</Label>
+                      <Label htmlFor="two-factor">Two-Factor Authentication</Label>
                       <Switch
-                        id="require-2fa"
-                        checked={securitySettings.require2FA}
+                        id="two-factor"
+                        checked={securitySettings.twoFactorAuth}
                         onCheckedChange={(checked) =>
-                          setSecuritySettings(prev => ({ ...prev, require2FA: checked }))
+                          setSecuritySettings(prev => ({ ...prev, twoFactorAuth: checked }))
                         }
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
-                      <Input
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="biometric">Biometric Login</Label>
+                      <Switch
+                        id="biometric"
+                        checked={securitySettings.biometricLogin}
+                        onCheckedChange={(checked) =>
+                          setSecuritySettings(prev => ({ ...prev, biometricLogin: checked }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="session-timeout">Auto Session Timeout</Label>
+                      <Switch
                         id="session-timeout"
-                        type="number"
-                        min="5"
-                        max="180"
-                        value={securitySettings.sessionTimeout}
-                        onChange={(e) =>
-                          setSecuritySettings(prev => ({ ...prev, sessionTimeout: e.target.value }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="max-attempts">Max Login Attempts</Label>
-                      <Input
-                        id="max-attempts"
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={securitySettings.maxLoginAttempts}
-                        onChange={(e) =>
-                          setSecuritySettings(prev => ({ ...prev, maxLoginAttempts: e.target.value }))
+                        checked={securitySettings.sessionTimeout}
+                        onCheckedChange={(checked) =>
+                          setSecuritySettings(prev => ({ ...prev, sessionTimeout: checked }))
                         }
                       />
                     </div>
@@ -444,37 +386,40 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="password-length">Minimum Password Length</Label>
+                      <Label htmlFor="session-duration">Session Duration (minutes)</Label>
                       <Input
-                        id="password-length"
+                        id="session-duration"
                         type="number"
-                        min="6"
-                        max="20"
-                        value={securitySettings.passwordMinLength}
+                        min="5"
+                        max="1440"
+                        value={securitySettings.sessionDuration}
                         onChange={(e) =>
-                          setSecuritySettings(prev => ({ ...prev, passwordMinLength: e.target.value }))
+                          setSecuritySettings(prev => ({ ...prev, sessionDuration: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="login-attempts">Max Login Attempts</Label>
+                      <Input
+                        id="login-attempts"
+                        type="number"
+                        min="3"
+                        max="10"
+                        value={securitySettings.maxLoginAttempts}
+                        onChange={(e) =>
+                          setSecuritySettings(prev => ({ ...prev, maxLoginAttempts: e.target.value }))
                         }
                       />
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="special-chars">Require Special Characters</Label>
+                      <Label htmlFor="ip-whitelisting">IP Whitelisting</Label>
                       <Switch
-                        id="special-chars"
-                        checked={securitySettings.requireSpecialChars}
+                        id="ip-whitelisting"
+                        checked={securitySettings.ipWhitelisting}
                         onCheckedChange={(checked) =>
-                          setSecuritySettings(prev => ({ ...prev, requireSpecialChars: checked }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="kyc-required">KYC Verification Required</Label>
-                      <Switch
-                        id="kyc-required"
-                        checked={securitySettings.kycVerificationRequired}
-                        onCheckedChange={(checked) =>
-                          setSecuritySettings(prev => ({ ...prev, kycVerificationRequired: checked }))
+                          setSecuritySettings(prev => ({ ...prev, ipWhitelisting: checked }))
                         }
                       />
                     </div>
@@ -487,6 +432,145 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                   className="w-full"
                 >
                   {loading ? "Saving..." : "Save Security Settings"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* RPC API Settings */}
+          <TabsContent value="rpc">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Settings className="w-5 h-5 mr-2" />
+                  RPC API Configuration
+                </CardTitle>
+                <CardDescription>
+                  Configure external RPC API endpoints and authentication
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="rpc-endpoint">RPC Endpoint URL</Label>
+                      <Input
+                        id="rpc-endpoint"
+                        type="url"
+                        placeholder="https://api.example.com/rpc"
+                        value={rpcSettings.endpoint}
+                        onChange={(e) =>
+                          setRpcSettings(prev => ({ ...prev, endpoint: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rpc-api-key">API Key</Label>
+                      <Input
+                        id="rpc-api-key"
+                        type="password"
+                        placeholder="Enter API key..."
+                        value={rpcSettings.apiKey}
+                        onChange={(e) =>
+                          setRpcSettings(prev => ({ ...prev, apiKey: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rpc-network">Network</Label>
+                      <Select 
+                        value={rpcSettings.network} 
+                        onValueChange={(value) => 
+                          setRpcSettings(prev => ({ ...prev, network: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mainnet">Mainnet</SelectItem>
+                          <SelectItem value="testnet">Testnet</SelectItem>
+                          <SelectItem value="devnet">Devnet</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="rpc-timeout">Request Timeout (seconds)</Label>
+                      <Input
+                        id="rpc-timeout"
+                        type="number"
+                        min="5"
+                        max="300"
+                        value={rpcSettings.timeout}
+                        onChange={(e) =>
+                          setRpcSettings(prev => ({ ...prev, timeout: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rpc-retries">Max Retries</Label>
+                      <Input
+                        id="rpc-retries"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={rpcSettings.maxRetries}
+                        onChange={(e) =>
+                          setRpcSettings(prev => ({ ...prev, maxRetries: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="rpc-ssl">SSL Verification</Label>
+                      <Switch
+                        id="rpc-ssl"
+                        checked={rpcSettings.sslVerification}
+                        onCheckedChange={(checked) =>
+                          setRpcSettings(prev => ({ ...prev, sslVerification: checked }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="rpc-enabled">Enable RPC API</Label>
+                      <Switch
+                        id="rpc-enabled"
+                        checked={rpcSettings.enabled}
+                        onCheckedChange={(checked) =>
+                          setRpcSettings(prev => ({ ...prev, enabled: checked }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <Label>Connection Test</Label>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1">
+                      Test Connection
+                    </Button>
+                    <Button variant="outline" className="flex-1">
+                      View Logs
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => saveSettings('RPC', rpcSettings)}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? "Saving..." : "Save RPC Settings"}
                 </Button>
               </CardContent>
             </Card>
@@ -516,39 +600,25 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                     </div>
 
                     <div>
-                      <Label htmlFor="support-email">Support Email</Label>
-                      <Input
-                        id="support-email"
-                        type="email"
-                        value={systemSettings.supportEmail}
-                        onChange={(e) =>
-                          setSystemSettings(prev => ({ ...prev, supportEmail: e.target.value }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="default-currency">Default Currency</Label>
-                      <Select
-                        value={systemSettings.defaultCurrency}
-                        onValueChange={(value) =>
-                          setSystemSettings(prev => ({ ...prev, defaultCurrency: value }))
+                      <Label htmlFor="time-zone">Time Zone</Label>
+                      <Select 
+                        value={systemSettings.timeZone} 
+                        onValueChange={(value) => 
+                          setSystemSettings(prev => ({ ...prev, timeZone: value }))
                         }
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                          <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                          <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                          <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
+                          <SelectItem value="UTC">UTC</SelectItem>
+                          <SelectItem value="EST">Eastern Time</SelectItem>
+                          <SelectItem value="PST">Pacific Time</SelectItem>
+                          <SelectItem value="GMT">Greenwich Mean Time</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
                       <Switch
@@ -559,14 +629,16 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
                         }
                       />
                     </div>
+                  </div>
 
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="allow-registrations">Allow New Registrations</Label>
+                      <Label htmlFor="debug-mode">Debug Mode</Label>
                       <Switch
-                        id="allow-registrations"
-                        checked={systemSettings.allowNewRegistrations}
+                        id="debug-mode"
+                        checked={systemSettings.debugMode}
                         onCheckedChange={(checked) =>
-                          setSystemSettings(prev => ({ ...prev, allowNewRegistrations: checked }))
+                          setSystemSettings(prev => ({ ...prev, debugMode: checked }))
                         }
                       />
                     </div>
@@ -609,4 +681,6 @@ export function SystemSettingsModal({ open, onOpenChange }: SystemSettingsModalP
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default SystemSettingsModal;

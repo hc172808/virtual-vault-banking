@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { ManageUsersModal } from "@/components/admin/ManageUsersModal";
 import { FundManagementModal } from "@/components/admin/FundManagementModal";
-import { SystemSettingsModal } from "@/components/admin/SystemSettingsModal";
+import SystemSettingsModal from "@/components/admin/SystemSettingsModal";
+import CardPrintingModal from "@/components/admin/CardPrintingModal";
 import { 
   CreditCard, 
   Users, 
@@ -47,6 +48,7 @@ export default function SimpleBankingApp() {
   const [showManageUsers, setShowManageUsers] = useState(false);
   const [showFundManagement, setShowFundManagement] = useState(false);
   const [showSystemSettings, setShowSystemSettings] = useState(false);
+  const [showCardPrinting, setShowCardPrinting] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -480,7 +482,7 @@ export default function SimpleBankingApp() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button 
                   variant="outline" 
                   className="justify-start"
@@ -504,6 +506,14 @@ export default function SimpleBankingApp() {
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   System Settings
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start"
+                  onClick={() => setShowCardPrinting(true)}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Card Printing
                 </Button>
               </div>
             </CardContent>
@@ -547,6 +557,10 @@ export default function SimpleBankingApp() {
       <SystemSettingsModal 
         open={showSystemSettings} 
         onOpenChange={setShowSystemSettings} 
+      />
+      <CardPrintingModal 
+        open={showCardPrinting} 
+        onOpenChange={setShowCardPrinting} 
       />
     </div>
   );
