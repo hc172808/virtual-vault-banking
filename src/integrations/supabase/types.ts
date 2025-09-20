@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fund_logs: {
+        Row: {
+          admin_id: string
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          id: string
+          reason: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          amount: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          id?: string
+          reason: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fund_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           balance: number | null

@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { ManageUsersModal } from "@/components/admin/ManageUsersModal";
+import { FundManagementModal } from "@/components/admin/FundManagementModal";
+import { SystemSettingsModal } from "@/components/admin/SystemSettingsModal";
 import { 
   CreditCard, 
   Users, 
@@ -16,7 +19,9 @@ import {
   TrendingUp,
   Eye,
   EyeOff,
-  Copy
+  Copy,
+  Settings,
+  User as UserIcon
 } from "lucide-react";
 import bankingHero from "@/assets/banking-hero.jpg";
 
@@ -36,6 +41,12 @@ export default function SimpleBankingApp() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showBalance, setShowBalance] = useState(false);
+  const [cardLocked, setCardLocked] = useState(false);
+  
+  // Admin modal states
+  const [showManageUsers, setShowManageUsers] = useState(false);
+  const [showFundManagement, setShowFundManagement] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -439,9 +450,20 @@ export default function SimpleBankingApp() {
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Number
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => {
+                    setCardLocked(!cardLocked);
+                    toast({
+                      title: cardLocked ? "Card Unlocked" : "Card Locked",
+                      description: `Your card has been ${cardLocked ? 'unlocked' : 'locked'} successfully`,
+                    });
+                  }}
+                >
                   <Shield className="w-4 h-4 mr-2" />
-                  Lock Card
+                  {cardLocked ? 'Unlock Card' : 'Lock Card'}
                 </Button>
               </div>
             </div>
@@ -459,16 +481,28 @@ export default function SimpleBankingApp() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button variant="outline" className="justify-start">
+                <Button 
+                  variant="outline" 
+                  className="justify-start"
+                  onClick={() => setShowManageUsers(true)}
+                >
                   <Users className="w-4 h-4 mr-2" />
                   Manage Users
                 </Button>
-                <Button variant="outline" className="justify-start">
+                <Button 
+                  variant="outline" 
+                  className="justify-start"
+                  onClick={() => setShowFundManagement(true)}
+                >
                   <DollarSign className="w-4 h-4 mr-2" />
                   Fund Management
                 </Button>
-                <Button variant="outline" className="justify-start">
-                  <Shield className="w-4 h-4 mr-2" />
+                <Button 
+                  variant="outline" 
+                  className="justify-start"
+                  onClick={() => setShowSystemSettings(true)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
                   System Settings
                 </Button>
               </div>
@@ -499,6 +533,21 @@ export default function SimpleBankingApp() {
           </Card>
         )}
       </div>
+
+      {/* Admin Modals */}
+      <ManageUsersModal 
+        open={showManageUsers} 
+        onOpenChange={setShowManageUsers} 
+      />
+      <FundManagementModal 
+        open={showFundManagement} 
+        onOpenChange={setShowFundManagement}
+        currentUser={user}
+      />
+      <SystemSettingsModal 
+        open={showSystemSettings} 
+        onOpenChange={setShowSystemSettings} 
+      />
     </div>
   );
 }
