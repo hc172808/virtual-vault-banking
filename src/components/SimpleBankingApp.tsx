@@ -11,6 +11,9 @@ import { ManageUsersModal } from "@/components/admin/ManageUsersModal";
 import { FundManagementModal } from "@/components/admin/FundManagementModal";
 import SystemSettingsModal from "@/components/admin/SystemSettingsModal";
 import CardPrintingModal from "@/components/admin/CardPrintingModal";
+import CardViewModal from "@/components/CardViewModal";
+import PinSettingsModal from "@/components/PinSettingsModal";
+import TransactionModal from "@/components/TransactionModal";
 import { 
   CreditCard, 
   Users, 
@@ -22,7 +25,9 @@ import {
   EyeOff,
   Copy,
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  Send,
+  Lock
 } from "lucide-react";
 import bankingHero from "@/assets/banking-hero.jpg";
 
@@ -31,6 +36,8 @@ interface Profile {
   full_name: string;
   email: string;
   balance: number;
+  pin_enabled?: boolean;
+  pin_hash?: string;
 }
 
 export default function SimpleBankingApp() {
@@ -49,6 +56,9 @@ export default function SimpleBankingApp() {
   const [showFundManagement, setShowFundManagement] = useState(false);
   const [showSystemSettings, setShowSystemSettings] = useState(false);
   const [showCardPrinting, setShowCardPrinting] = useState(false);
+  const [showCardView, setShowCardView] = useState(false);
+  const [showPinSettings, setShowPinSettings] = useState(false);
+  const [showTransaction, setShowTransaction] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -68,12 +78,15 @@ export default function SimpleBankingApp() {
     }
   };
 
-  const loadProfile = async (userId: string) => {
+  const loadProfile = async (userId?: string) => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) return;
+    
     try {
       const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('role, full_name, email, balance')
-        .eq('user_id', userId)
+        .select('role, full_name, email, balance, pin_enabled, pin_hash')
+        .eq('user_id', targetUserId)
         .maybeSingle();
 
       if (error) throw error;
@@ -87,7 +100,7 @@ export default function SimpleBankingApp() {
           const { error: insertError } = await (supabase as any)
             .from('profiles')
             .insert({
-              user_id: userId,
+              user_id: targetUserId,
               email: user.email || '',
               full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
               role: 'CLIENT',
@@ -97,9 +110,9 @@ export default function SimpleBankingApp() {
             // Try loading again
             const { data: newProfile } = await (supabase as any)
               .from('profiles')
-              .select('role, full_name, email, balance')
-              .eq('user_id', userId)
-              .single();
+              .select('role, full_name, email, balance, pin_enabled, pin_hash')
+              .eq('user_id', targetUserId)
+              .maybeSingle();
             
             if (newProfile) {
               setProfile(newProfile);
@@ -397,80 +410,156 @@ export default function SimpleBankingApp() {
           </Card>
         </div>
 
-        {/* Virtual Card Demo */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <CreditCard className="w-5 h-5 mr-2" />
-              Virtual Card Preview
-            </CardTitle>
-            <CardDescription>
-              Your digital payment card (Demo)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="max-w-sm mx-auto">
-              <div className="w-full h-56 bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground shadow-2xl border-0 overflow-hidden rounded-xl p-6 flex flex-col justify-between relative">
-                <div className="flex justify-between items-start">
-                  <Badge className="bg-success text-success-foreground text-xs">
-                    ACTIVE
-                  </Badge>
-                  <CreditCard className="w-8 h-8 opacity-80" />
+        {/* Virtual Card & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Virtual Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CreditCard className="w-5 h-5 mr-2" />
+                Your StableCoin Card
+              </CardTitle>
+              <CardDescription>
+                Virtual debit card for secure transactions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-w-sm mx-auto">
+                <div 
+                  className="w-full h-56 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white shadow-2xl border-0 overflow-hidden rounded-xl p-6 flex flex-col justify-between relative cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setShowCardView(true)}
+                >
+                  <div className="flex justify-between items-start">
+                    <Badge className="bg-white/20 text-white text-xs">
+                      {cardLocked ? 'LOCKED' : 'ACTIVE'}
+                    </Badge>
+                    <div className="text-lg font-bold">StableCoin</div>
+                  </div>
+
+                  <div className="absolute top-4 left-4">
+                    <div className="w-12 h-8 bg-yellow-400 rounded"></div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-lg font-mono tracking-wider">
+                      •••• •••• •••• 9012
+                    </div>
+                    
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-xs opacity-70">CARDHOLDER</p>
+                        <p className="font-semibold text-sm uppercase">
+                          {profile.full_name}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs opacity-70">EXPIRES</p>
+                        <p className="font-mono text-sm">12/28</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-lg font-mono tracking-wider">
-                    •••• •••• •••• 1234
-                  </div>
-                  
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-xs opacity-80">CARDHOLDER</p>
-                      <p className="font-semibold text-sm uppercase">
-                        {profile.full_name}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs opacity-80">EXPIRES</p>
-                      <p className="font-mono text-sm">12/28</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                  <div className="w-full h-full bg-gradient-to-br from-white/20 to-transparent rounded-full transform translate-x-8 -translate-y-8"></div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCardView(true)}
+                    className="w-full"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Card
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      setCardLocked(!cardLocked);
+                      toast({
+                        title: cardLocked ? "Card Unlocked" : "Card Locked",
+                        description: `Your card has been ${cardLocked ? 'unlocked' : 'locked'} successfully`,
+                      });
+                    }}
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    {cardLocked ? 'Unlock' : 'Lock'}
+                  </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="mt-4 flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard("4532 1234 5678 1234")}
-                  className="flex-1"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Number
-                </Button>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Send className="w-5 h-5 mr-2" />
+                Quick Actions
+              </CardTitle>
+              <CardDescription>
+                Manage your account and transactions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
                 <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
+                  onClick={() => setShowTransaction(true)}
+                  className="justify-start h-12"
+                >
+                  <Send className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">Send Money</div>
+                    <div className="text-xs opacity-80">Transfer to anyone instantly</div>
+                  </div>
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowPinSettings(true)}
+                  className="justify-start h-12"
+                >
+                  <Lock className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">PIN Settings</div>
+                    <div className="text-xs text-muted-foreground">
+                      {profile.pin_enabled ? 'PIN protection enabled' : 'Set up transaction PIN'}
+                    </div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowCardView(true)}
+                  className="justify-start h-12"
+                >
+                  <CreditCard className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">Card Details</div>
+                    <div className="text-xs text-muted-foreground">View card information</div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
                   onClick={() => {
-                    setCardLocked(!cardLocked);
                     toast({
-                      title: cardLocked ? "Card Unlocked" : "Card Locked",
-                      description: `Your card has been ${cardLocked ? 'unlocked' : 'locked'} successfully`,
+                      title: "Coming Soon",
+                      description: "Transaction history feature will be available soon",
                     });
                   }}
+                  className="justify-start h-12"
                 >
-                  <Shield className="w-4 h-4 mr-2" />
-                  {cardLocked ? 'Unlock Card' : 'Lock Card'}
+                  <UserIcon className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">Account Settings</div>
+                    <div className="text-xs text-muted-foreground">Manage your profile</div>
+                  </div>
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Role-specific features */}
         {profile.role === 'ADMIN' && (
@@ -561,6 +650,25 @@ export default function SimpleBankingApp() {
       <CardPrintingModal 
         open={showCardPrinting} 
         onOpenChange={setShowCardPrinting} 
+      />
+
+      {/* User Modals */}
+      <CardViewModal
+        open={showCardView}
+        onOpenChange={setShowCardView}
+        userProfile={profile}
+      />
+      <PinSettingsModal
+        open={showPinSettings}
+        onOpenChange={setShowPinSettings}
+        userId={user?.id || ''}
+      />
+      <TransactionModal
+        open={showTransaction}
+        onOpenChange={setShowTransaction}
+        userProfile={profile}
+        userId={user?.id || ''}
+        onTransactionComplete={loadProfile}
       />
     </div>
   );

@@ -95,6 +95,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          pin_enabled: boolean | null
+          pin_hash: string | null
           role: string
           user_id: string
         }
@@ -104,6 +106,8 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          pin_enabled?: boolean | null
+          pin_hash?: string | null
           role?: string
           user_id: string
         }
@@ -113,6 +117,8 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          pin_enabled?: boolean | null
+          pin_hash?: string | null
           role?: string
           user_id?: string
         }
