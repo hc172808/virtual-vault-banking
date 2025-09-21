@@ -69,6 +69,21 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
     enabled: false,
   });
 
+  // Firewall Settings
+  const [firewallSettings, setFirewallSettings] = useState({
+    enabled: true,
+    blockedIPs: [],
+    allowedCountries: ['US', 'CA', 'GB', 'AU'],
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: 100,
+      burstLimit: 200,
+    },
+    ddosProtection: true,
+    geoBlocking: false,
+    vpnDetection: true,
+  });
+
   // System Settings
   const [systemSettings, setSystemSettings] = useState({
     systemName: "Banking System",
@@ -114,11 +129,12 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
         </DialogHeader>
 
         <Tabs defaultValue="stablecoin" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="stablecoin">Stablecoin</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="rpc">RPC API</TabsTrigger>
+            <TabsTrigger value="firewall">Firewall</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 

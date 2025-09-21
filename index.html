@@ -2,23 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VirtualBank - Secure Digital Banking</title>
-    <meta name="description" content="Modern virtual banking system with secure virtual cards, multi-role access, and comprehensive financial management." />
-    <meta name="author" content="VirtualBank" />
-
-    <meta property="og:title" content="VirtualBank - Secure Digital Banking" />
-    <meta property="og:description" content="Modern virtual banking system with secure virtual cards, multi-role access, and comprehensive financial management." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="description" content="Secure digital banking and cryptocurrency management" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <title>StableCoin Banking</title>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register service worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => console.log('SW registered: ', registration))
+            .catch(registrationError => console.log('SW registration failed: ', registrationError));
+        });
+      }
+    </script>
   </body>
 </html>
