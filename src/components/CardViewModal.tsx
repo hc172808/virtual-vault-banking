@@ -49,79 +49,78 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <CreditCard className="w-5 h-5 mr-2" />
             Card Details
           </DialogTitle>
           <DialogDescription>
-            View your card information and manage settings
+            View your card information
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Card Preview */}
+        <div className="space-y-4">
+          {/* Compact Card Preview */}
           <div className="relative">
             <div 
-              className="w-full max-w-md mx-auto cursor-pointer transform transition-transform hover:scale-105"
+              className="w-full cursor-pointer transform transition-transform hover:scale-105"
               onClick={toggleCardSide}
             >
-              <div className="relative w-full h-56 rounded-xl shadow-lg overflow-hidden">
+              <div className="relative w-full aspect-[1.586] rounded-xl shadow-lg overflow-hidden">
                 {cardSide === 'front' ? (
                   // Card Front
-                  <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative">
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="secondary" className="bg-white/20 text-white">
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 text-white relative">
+                    <div className="absolute top-3 right-3">
+                      <Badge variant="secondary" className="bg-white/20 text-white text-xs px-2 py-0.5">
                         STABLECOIN
                       </Badge>
                     </div>
                     
-                    <div className="absolute top-4 left-4">
-                      <div className="w-12 h-8 bg-yellow-400 rounded"></div>
+                    <div className="absolute top-3 left-3">
+                      <div className="w-10 h-6 bg-yellow-400 rounded"></div>
                     </div>
 
-                    <div className="absolute bottom-16 left-6 right-6">
-                      <div className="text-xl font-mono tracking-wider mb-4">
+                    <div className="absolute bottom-10 left-4 right-4">
+                      <div className="text-base font-mono tracking-wider mb-2">
                         {showCardNumber ? cardNumber : "•••• •••• •••• " + cardNumber.slice(-4)}
                       </div>
                       
-                      <div className="flex justify-between items-end">
+                      <div className="flex justify-between items-end text-xs">
                         <div>
-                          <div className="text-xs opacity-70">CARDHOLDER NAME</div>
-                          <div className="text-sm font-semibold">{cardholderName}</div>
+                          <div className="opacity-70">CARDHOLDER</div>
+                          <div className="font-semibold">{cardholderName}</div>
                         </div>
                         <div>
-                          <div className="text-xs opacity-70">EXPIRES</div>
-                          <div className="text-sm font-semibold">{expiryDate}</div>
+                          <div className="opacity-70">EXPIRES</div>
+                          <div className="font-semibold">{expiryDate}</div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="absolute bottom-4 right-6">
-                      <div className="text-lg font-bold">StableCoin</div>
+                    <div className="absolute bottom-3 right-4 text-sm font-bold">
+                      StableCoin
                     </div>
                   </div>
                 ) : (
-                  // Card Back
-                  <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative">
-                    <div className="w-full h-10 bg-black mt-4 mb-6"></div>
+                  // Card Back  
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 text-white relative">
+                    <div className="w-full h-8 bg-black mt-3 mb-4"></div>
                     
-                    <div className="mb-4">
+                    <div className="mb-3">
                       <div className="text-xs opacity-70 mb-1">CVV</div>
-                      <div className="w-16 h-6 bg-white text-black flex items-center justify-center text-sm font-mono">
+                      <div className="w-12 h-5 bg-white text-black flex items-center justify-center text-xs font-mono">
                         {showCVV ? cvv : "•••"}
                       </div>
                     </div>
 
-                    <div className="text-xs space-y-2 mt-8">
-                      <div>This card is property of StableCoin Bank</div>
-                      <div>If found, please call +1-800-STABLE</div>
-                      <div>customerservice@stablecoin.com</div>
+                    <div className="text-[10px] space-y-1 mt-6 opacity-80">
+                      <div>StableCoin Bank</div>
+                      <div>+1-800-STABLE</div>
                     </div>
 
-                    <div className="absolute bottom-4 right-6">
-                      <div className="text-lg font-bold">StableCoin</div>
+                    <div className="absolute bottom-3 right-4 text-sm font-bold">
+                      StableCoin
                     </div>
                   </div>
                 )}
@@ -129,35 +128,37 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             </div>
             
             <div className="text-center mt-2">
-              <Button variant="ghost" size="sm" onClick={toggleCardSide}>
+              <Button variant="ghost" size="sm" onClick={toggleCardSide} className="text-xs">
                 Click to flip card
               </Button>
             </div>
           </div>
 
-          {/* Card Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Compact Card Controls */}
+          <div className="grid grid-cols-2 gap-3">
             <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Card Number</h3>
+              <CardContent className="p-3">
+                <h3 className="text-xs font-semibold mb-2">Card Number</h3>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono">
-                    {showCardNumber ? cardNumber : "•••• •••• •••• " + cardNumber.slice(-4)}
+                  <span className="font-mono text-xs">
+                    {showCardNumber ? cardNumber : "•••• " + cardNumber.slice(-4)}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="h-6 w-6 p-0"
                       onClick={() => setShowCardNumber(!showCardNumber)}
                     >
-                      {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showCardNumber ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="h-6 w-6 p-0"
                       onClick={() => copyToClipboard(cardNumber, "Card number")}
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>
@@ -165,26 +166,28 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             </Card>
 
             <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Security Code (CVV)</h3>
+              <CardContent className="p-3">
+                <h3 className="text-xs font-semibold mb-2">CVV</h3>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono">
+                  <span className="font-mono text-xs">
                     {showCVV ? cvv : "•••"}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="h-6 w-6 p-0"
                       onClick={() => setShowCVV(!showCVV)}
                     >
-                      {showCVV ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showCVV ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="h-6 w-6 p-0"
                       onClick={() => copyToClipboard(cvv, "CVV")}
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>
@@ -192,44 +195,29 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             </Card>
           </div>
 
-          {/* Card Information */}
+          {/* Compact Card Info */}
           <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-3">Card Information</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-muted-foreground">Expiry Date:</span>
-                  <span className="ml-2 font-mono">{expiryDate}</span>
+                  <div className="text-muted-foreground mb-1">Type</div>
+                  <div className="font-medium">Virtual Debit</div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Card Type:</span>
-                  <span className="ml-2">Debit Card</span>
+                  <div className="text-muted-foreground mb-1">Status</div>
+                  <Badge variant="default" className="text-xs">Active</Badge>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Status:</span>
-                  <Badge variant="default" className="ml-2">Active</Badge>
+                  <div className="text-muted-foreground mb-1">Expires</div>
+                  <div className="font-medium">{expiryDate}</div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Available Balance:</span>
-                  <span className="ml-2 font-semibold">${userProfile?.balance?.toFixed(2) || '0.00'}</span>
+                  <div className="text-muted-foreground mb-1">Balance</div>
+                  <div className="font-medium">${userProfile?.balance?.toFixed(2) || '0.00'}</div>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Security Notice */}
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="flex items-start">
-              <Lock className="w-5 h-5 text-muted-foreground mt-0.5 mr-3" />
-              <div className="text-sm">
-                <p className="font-medium mb-1">Security Notice</p>
-                <p className="text-muted-foreground">
-                  Never share your card details with anyone. StableCoin will never ask for your 
-                  PIN, CVV, or full card number via email or phone.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

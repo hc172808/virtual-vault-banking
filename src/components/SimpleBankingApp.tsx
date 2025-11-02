@@ -29,8 +29,8 @@ import TransactionHistoryModal from "./TransactionHistoryModal";
 import NotificationSystem from "./NotificationSystem";
 import { ManageUsersModal } from "./admin/ManageUsersModal";
 import { FundManagementModal } from "./admin/FundManagementModal";
-import { SystemSettingsModal } from "./admin/SystemSettingsModal";
-import { CardPrintingModal } from "./admin/CardPrintingModal";
+import SystemSettingsModal from "./admin/SystemSettingsModal";
+import CardPrintingModal from "./admin/CardPrintingModal";
 
 interface SimpleBankingAppProps {
   user: any;
@@ -245,40 +245,40 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
             </CardHeader>
             <CardContent>
               <div className="max-w-sm mx-auto">
-                <div 
-                  className="w-full h-56 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white shadow-2xl border-0 overflow-hidden rounded-xl p-6 flex flex-col justify-between relative cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setShowCardView(true)}
-                >
-                  <div className="flex justify-between items-start">
-                    <Badge className="bg-white/20 text-white text-xs">
-                      {cardLocked ? 'LOCKED' : 'ACTIVE'}
-                    </Badge>
-                    <div className="text-lg font-bold">StableCoin</div>
-                  </div>
+              <div 
+                className="w-full aspect-[1.586] bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white shadow-xl rounded-xl p-4 flex flex-col justify-between relative cursor-pointer hover:scale-105 transition-transform"
+                onClick={() => setShowCardView(true)}
+              >
+                <div className="flex justify-between items-start">
+                  <Badge className="bg-white/20 text-white text-xs px-2 py-0.5">
+                    {cardLocked ? 'LOCKED' : 'ACTIVE'}
+                  </Badge>
+                  <div className="text-sm font-bold">StableCoin</div>
+                </div>
 
-                  <div className="absolute top-4 left-4">
-                    <div className="w-12 h-8 bg-yellow-400 rounded"></div>
-                  </div>
+                <div className="absolute top-3 left-3">
+                  <div className="w-10 h-6 bg-yellow-400 rounded"></div>
+                </div>
 
-                  <div className="space-y-2">
-                    <div className="text-lg font-mono tracking-wider">
-                      •••• •••• •••• 9012
+                <div className="space-y-1.5">
+                  <div className="text-base font-mono tracking-wider">
+                    •••• •••• •••• 9012
+                  </div>
+                  
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] opacity-70">CARDHOLDER</p>
+                      <p className="font-semibold text-xs uppercase">
+                        {profile.full_name}
+                      </p>
                     </div>
-                    
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-xs opacity-70">CARDHOLDER</p>
-                        <p className="font-semibold text-sm uppercase">
-                          {profile.full_name}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs opacity-70">EXPIRES</p>
-                        <p className="font-mono text-sm">12/28</p>
-                      </div>
+                    <div className="text-right">
+                      <p className="text-[10px] opacity-70">EXPIRES</p>
+                      <p className="font-mono text-xs">12/28</p>
                     </div>
                   </div>
                 </div>
+              </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Button
@@ -382,6 +382,30 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                   <div className="text-left">
                     <div className="font-medium">Transaction History</div>
                     <div className="text-xs text-muted-foreground">View account activity</div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/settings'}
+                  className="justify-start h-12"
+                >
+                  <Settings className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">Account Settings</div>
+                    <div className="text-xs text-muted-foreground">Manage preferences</div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/profile'}
+                  className="justify-start h-12"
+                >
+                  <UserIcon className="w-5 h-5 mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium">Manage Profile</div>
+                    <div className="text-xs text-muted-foreground">Update your information</div>
                   </div>
                 </Button>
               </div>

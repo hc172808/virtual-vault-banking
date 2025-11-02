@@ -43,6 +43,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
+  const [feeInfo, setFeeInfo] = useState({ percentage: 0, fixed: 0, total: 0 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -52,12 +53,40 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   useEffect(() => {
     if (open && mode === 'scan') {
       startCamera();
+      loadFeeSettings();
     } else {
       stopCamera();
     }
     
     return () => stopCamera();
   }, [open, mode]);
+
+  const loadFeeSettings = async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['transfer_fee_percentage', 'transfer_fee_fixed']);
+      
+      const feePercentage = parseFloat(data?.find((s: any) => s.setting_key === 'transfer_fee_percentage')?.setting_value || '0');
+      const feeFixed = parseFloat(data?.find((s: any) => s.setting_key === 'transfer_fee_fixed')?.setting_value || '0');
+      
+      setFeeInfo({ percentage: feePercentage, fixed: feeFixed, total: 0 });
+    } catch (error) {
+      console.error('Error loading fee settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (amount && parseFloat(amount) > 0) {
+      const amountNum = parseFloat(amount);
+      const totalFee = (amountNum * feeInfo.percentage / 100) + feeInfo.fixed;
+      setFeeInfo(prev => ({ ...prev, total: totalFee }));
+    } else {
+      setFeeInfo(prev => ({ ...prev, total: 0 }));
+    }
+  }, [amount, feeInfo.percentage, feeInfo.fixed]);
 
   const startCamera = async () => {
     try {
@@ -208,12 +237,35 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const processTransaction = async (transaction: any) => {
     setIsLoading(true);
     try {
-      // Simulate transaction processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      // Get fee settings
+      const { data: feeData } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['transfer_fee_percentage', 'transfer_fee_fixed']);
+      
+      const feePercentage = parseFloat(feeData?.find((s: any) => s.setting_key === 'transfer_fee_percentage')?.setting_value || '0');
+      const feeFixed = parseFloat(feeData?.find((s: any) => s.setting_key === 'transfer_fee_fixed')?.setting_value || '0');
+      const totalFee = (transaction.amount * feePercentage / 100) + feeFixed;
+      
+      // Call the process_transfer function
+      const { data, error } = await supabase.rpc('process_transfer', {
+        p_recipient_id: transaction.recipient.id,
+        p_amount: transaction.amount,
+        p_description: `QR Transfer to ${transaction.recipient.name}`
+      });
+
+      if (error) throw error;
+      
+      const result = data as any;
+      if (!result.success) {
+        throw new Error(result.error || 'Transaction failed');
+      }
 
       toast({
         title: "Transaction Successful",
-        description: `Sent $${transaction.amount.toFixed(2)} to ${transaction.recipient.name}`,
+        description: `Sent $${transaction.amount.toFixed(2)} to ${transaction.recipient.name} (Fee: $${totalFee.toFixed(2)})`,
       });
 
       // Reset form
@@ -227,11 +279,11 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
       
       // Close modal
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transaction error:', error);
       toast({
         title: "Transaction Failed",
-        description: "Unable to process transaction. Please try again.",
+        description: error.message || "Unable to process transaction. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -368,9 +420,26 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
                 <Alert>
                   <AlertDescription>
-                    Available Balance: ${userProfile?.balance?.toFixed(2) || '0.00'}
-                    {parseFloat(amount) > (userProfile?.balance || 0) && (
-                      <span className="text-destructive ml-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Amount:</span>
+                        <span className="font-medium">${parseFloat(amount || '0').toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Transaction Fee ({feeInfo.percentage}%):</span>
+                        <span className="font-medium">${feeInfo.total.toFixed(2)}</span>
+                      </div>
+                      <div className="border-t pt-1 flex justify-between font-semibold">
+                        <span>Total:</span>
+                        <span>${(parseFloat(amount || '0') + feeInfo.total).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                        <span>Available Balance:</span>
+                        <span>${userProfile?.balance?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </div>
+                    {(parseFloat(amount || '0') + feeInfo.total) > (userProfile?.balance || 0) && (
+                      <span className="text-destructive text-sm block mt-2">
                         Insufficient funds!
                       </span>
                     )}
@@ -399,11 +468,11 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
                   </Button>
                   <Button
                     onClick={handleSendMoney}
-                    disabled={isLoading || !amount || parseFloat(amount) <= 0}
+                    disabled={isLoading || !amount || parseFloat(amount) <= 0 || (parseFloat(amount) + feeInfo.total) > (userProfile?.balance || 0)}
                     className="flex-1"
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    {isLoading ? "Processing..." : "Send Money"}
+                    {isLoading ? "Processing..." : `Send $${(parseFloat(amount || '0') + feeInfo.total).toFixed(2)}`}
                   </Button>
                 </div>
               </>

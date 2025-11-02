@@ -46,6 +46,10 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
     kycRequiredAmount: "1000.00",
     agentDailyFundLimit: "25000.00",
     adminUnlimitedFunds: true,
+    transferFeePercentage: "0.5",
+    transferFeeFixed: "0.00",
+    minTransferAmount: "1.00",
+    maxTransferAmount: "10000.00",
   });
 
   // Security Settings
@@ -343,8 +347,100 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
                   </div>
                 </div>
 
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Transaction Fees</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="fee-percentage">Transfer Fee Percentage (%)</Label>
+                      <Input
+                        id="fee-percentage"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="10"
+                        value={transactionLimits.transferFeePercentage}
+                        onChange={(e) =>
+                          setTransactionLimits(prev => ({ ...prev, transferFeePercentage: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="fee-fixed">Fixed Transfer Fee ($)</Label>
+                      <Input
+                        id="fee-fixed"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={transactionLimits.transferFeeFixed}
+                        onChange={(e) =>
+                          setTransactionLimits(prev => ({ ...prev, transferFeeFixed: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="min-transfer">Minimum Transfer Amount ($)</Label>
+                      <Input
+                        id="min-transfer"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={transactionLimits.minTransferAmount}
+                        onChange={(e) =>
+                          setTransactionLimits(prev => ({ ...prev, minTransferAmount: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="max-transfer">Maximum Transfer Amount ($)</Label>
+                      <Input
+                        id="max-transfer"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={transactionLimits.maxTransferAmount}
+                        onChange={(e) =>
+                          setTransactionLimits(prev => ({ ...prev, maxTransferAmount: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <Button
-                  onClick={() => saveSettings('Transaction', transactionLimits)}
+                  onClick={async () => {
+                    // Save fee settings to database
+                    try {
+                      const { supabase } = await import("@/integrations/supabase/client");
+                      await supabase
+                        .from('system_settings')
+                        .update({ setting_value: transactionLimits.transferFeePercentage })
+                        .eq('setting_key', 'transfer_fee_percentage');
+                      
+                      await supabase
+                        .from('system_settings')
+                        .update({ setting_value: transactionLimits.transferFeeFixed })
+                        .eq('setting_key', 'transfer_fee_fixed');
+                      
+                      await supabase
+                        .from('system_settings')
+                        .update({ setting_value: transactionLimits.minTransferAmount })
+                        .eq('setting_key', 'min_transfer_amount');
+                      
+                      await supabase
+                        .from('system_settings')
+                        .update({ setting_value: transactionLimits.maxTransferAmount })
+                        .eq('setting_key', 'max_transfer_amount');
+                      
+                      saveSettings('Transaction', transactionLimits);
+                    } catch (error) {
+                      console.error('Error saving fee settings:', error);
+                    }
+                  }}
                   disabled={loading}
                   className="w-full"
                 >
