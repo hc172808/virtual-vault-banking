@@ -16,7 +16,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Shield, Settings, Globe } from "lucide-react";
+import { DollarSign, Shield, Settings, Globe, Plus, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FirewallRule {
+  id: string;
+  rule_type: string;
+  rule_value: string;
+  description: string;
+  enabled: boolean;
+}
 
 interface SystemSettingsModalProps {
   open: boolean;
@@ -26,6 +35,12 @@ interface SystemSettingsModalProps {
 const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [firewallRules, setFirewallRules] = useState<FirewallRule[]>([]);
+  const [newRule, setNewRule] = useState({
+    rule_type: 'ip_blacklist',
+    rule_value: '',
+    description: '',
+  });
 
   // Stablecoin Settings
   const [stablecoinSettings, setStablecoinSettings] = useState({
@@ -97,6 +112,106 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
     emailNotifications: true,
     smsNotifications: false,
   });
+
+  useEffect(() => {
+    if (open) {
+      loadFirewallRules();
+    }
+  }, [open]);
+
+  const loadFirewallRules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('firewall_rules')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setFirewallRules(data || []);
+    } catch (error) {
+      console.error('Error loading firewall rules:', error);
+    }
+  };
+
+  const addFirewallRule = async () => {
+    if (!newRule.rule_value) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a rule value",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('firewall_rules')
+        .insert([{
+          rule_type: newRule.rule_type,
+          rule_value: newRule.rule_value,
+          description: newRule.description,
+          enabled: true,
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Rule Added",
+        description: "Firewall rule has been added successfully",
+      });
+
+      setNewRule({ rule_type: 'ip_blacklist', rule_value: '', description: '' });
+      loadFirewallRules();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add rule",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleFirewallRule = async (id: string, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('firewall_rules')
+        .update({ enabled })
+        .eq('id', id);
+
+      if (error) throw error;
+      loadFirewallRules();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update rule",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteFirewallRule = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('firewall_rules')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Rule Deleted",
+        description: "Firewall rule has been deleted successfully",
+      });
+
+      loadFirewallRules();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete rule",
+        variant: "destructive",
+      });
+    }
+  };
 
   const saveSettings = async (category: string, settings: any) => {
     setLoading(true);
@@ -684,6 +799,118 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
                 >
                   {loading ? "Saving..." : "Save RPC Settings"}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Firewall Settings */}
+          <TabsContent value="firewall">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="w-5 h-5 mr-2" />
+                  Firewall Rules
+                </CardTitle>
+                <CardDescription>
+                  Manage IP addresses, countries, and rate limiting rules
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Add New Rule */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <h3 className="font-semibold">Add New Rule</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="rule-type">Rule Type</Label>
+                      <Select 
+                        value={newRule.rule_type}
+                        onValueChange={(value) => setNewRule(prev => ({ ...prev, rule_type: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ip_whitelist">IP Whitelist</SelectItem>
+                          <SelectItem value="ip_blacklist">IP Blacklist</SelectItem>
+                          <SelectItem value="country_whitelist">Country Whitelist</SelectItem>
+                          <SelectItem value="country_blacklist">Country Blacklist</SelectItem>
+                          <SelectItem value="rate_limit">Rate Limit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rule-value">Value</Label>
+                      <Input
+                        id="rule-value"
+                        placeholder="e.g., 192.168.1.1 or US"
+                        value={newRule.rule_value}
+                        onChange={(e) => setNewRule(prev => ({ ...prev, rule_value: e.target.value }))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rule-description">Description</Label>
+                      <Input
+                        id="rule-description"
+                        placeholder="Optional description"
+                        value={newRule.description}
+                        onChange={(e) => setNewRule(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={addFirewallRule} className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Rule
+                  </Button>
+                </div>
+
+                <Separator />
+
+                {/* Existing Rules */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Current Rules</h3>
+                  {firewallRules.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No firewall rules configured
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {firewallRules.map((rule) => (
+                        <div
+                          key={rule.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium capitalize">
+                                {rule.rule_type.replace('_', ' ')}
+                              </span>
+                              <span className="text-muted-foreground">→</span>
+                              <span className="font-mono text-sm">{rule.rule_value}</span>
+                            </div>
+                            {rule.description && (
+                              <p className="text-sm text-muted-foreground">{rule.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={rule.enabled}
+                              onCheckedChange={(checked) => toggleFirewallRule(rule.id, checked)}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteFirewallRule(rule.id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

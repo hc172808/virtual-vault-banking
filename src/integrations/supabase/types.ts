@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      firewall_rules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          id: string
+          rule_type: string
+          rule_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          rule_type: string
+          rule_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          rule_type?: string
+          rule_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       fund_logs: {
         Row: {
           admin_id: string
@@ -90,6 +120,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           balance: number | null
           created_at: string
           email: string
@@ -101,6 +132,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           balance?: number | null
           created_at?: string
           email: string
@@ -112,6 +144,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           balance?: number | null
           created_at?: string
           email?: string
