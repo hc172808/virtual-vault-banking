@@ -43,16 +43,18 @@ const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>{isLogin ? "Sign In" : "Sign Up"}</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="space-y-1 px-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl">
+          {isLogin ? "Sign In" : "Sign Up"}
+        </CardTitle>
+        <CardDescription className="text-sm">
           {isLogin
             ? "Enter your credentials to access your account"
             : "Create a new account to get started"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <form onSubmit={handleAuth} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

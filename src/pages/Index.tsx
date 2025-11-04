@@ -17,12 +17,12 @@ const Index = () => {
   }, []);
 
   if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen w-full overflow-x-hidden bg-background flex items-center justify-center p-4">Loading...</div>;
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen w-full overflow-x-hidden bg-background flex items-center justify-center p-4">
         <AuthForm />
       </div>
     );

@@ -58,8 +58,8 @@ const AccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl w-full">
         <Button
           variant="ghost"
           onClick={() => navigate('/')}
@@ -69,10 +69,10 @@ const AccountSettings: React.FC = () => {
           Back to Dashboard
         </Button>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full">
           <div>
-            <h1 className="text-3xl font-bold">Account Settings</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">Account Settings</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">
               Manage your account preferences and security settings
             </p>
           </div>

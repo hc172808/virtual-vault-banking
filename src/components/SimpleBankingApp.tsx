@@ -135,29 +135,30 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <div className="w-full sm:w-auto">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
               Welcome back, {profile.full_name}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               {profile.role === 'ADMIN' ? 'System Administrator' : 
                profile.role === 'AGENT' ? 'Customer Service Agent' : 
                'Secure Banking Dashboard'}
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-end">
             <NotificationSystem userId={user?.id || ''} />
             <Button 
               variant="outline" 
               onClick={handleSignOut}
-              className="flex items-center"
+              className="flex items-center text-sm"
+              size="sm"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
@@ -173,7 +174,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 w-full">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
@@ -232,7 +233,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         </div>
 
         {/* Virtual Card & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
           {/* Virtual Card */}
           <Card>
             <CardHeader>
@@ -245,9 +246,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-w-sm mx-auto">
+              <div className="w-full max-w-sm mx-auto">
               <div 
-                className="w-full aspect-[1.586] bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white shadow-xl rounded-xl p-4 flex flex-col justify-between relative cursor-pointer hover:scale-105 transition-transform"
+                className="w-full aspect-[1.586] bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white shadow-xl rounded-xl p-3 sm:p-4 flex flex-col justify-between relative cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => setShowCardView(true)}
               >
                 <div className="flex justify-between items-start">
@@ -262,20 +263,20 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="text-base font-mono tracking-wider">
+                  <div className="text-sm sm:text-base font-mono tracking-wider">
                     •••• •••• •••• 9012
                   </div>
                   
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[10px] opacity-70">CARDHOLDER</p>
-                      <p className="font-semibold text-xs uppercase">
+                      <p className="text-[9px] sm:text-[10px] opacity-70">CARDHOLDER</p>
+                      <p className="font-semibold text-[10px] sm:text-xs uppercase">
                         {profile.full_name}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] opacity-70">EXPIRES</p>
-                      <p className="font-mono text-xs">12/28</p>
+                      <p className="text-[9px] sm:text-[10px] opacity-70">EXPIRES</p>
+                      <p className="font-mono text-[10px] sm:text-xs">12/28</p>
                     </div>
                   </div>
                 </div>
@@ -286,15 +287,16 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowCardView(true)}
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm"
                   >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Card
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">View Card</span>
+                    <span className="sm:hidden">View</span>
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm"
                     onClick={() => {
                       setCardLocked(!cardLocked);
                       toast({
@@ -303,7 +305,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                       });
                     }}
                   >
-                    <Shield className="w-4 h-4 mr-2" />
+                    <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     {cardLocked ? 'Unlock' : 'Lock'}
                   </Button>
                 </div>
@@ -322,28 +324,28 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 Manage your account and transactions
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
                     onClick={() => setShowTransaction(true)}
-                    className="justify-start h-12"
+                    className="justify-start h-12 text-xs sm:text-sm"
                   >
-                    <Send className="w-5 h-5 mr-3" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                     <div className="text-left">
-                      <div className="font-medium text-xs">Send Money</div>
-                      <div className="text-xs opacity-80">Bank transfer</div>
+                      <div className="font-medium text-[10px] sm:text-xs">Send Money</div>
+                      <div className="text-[9px] sm:text-xs opacity-80">Bank transfer</div>
                     </div>
                   </Button>
                   <Button 
                     onClick={() => setShowQRScanner(true)}
-                    className="justify-start h-12"
+                    className="justify-start h-12 text-xs sm:text-sm"
                     variant="outline"
                   >
-                    <QrCode className="w-5 h-5 mr-3" />
+                    <QrCode className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                     <div className="text-left">
-                      <div className="font-medium text-xs">QR Transfer</div>
-                      <div className="text-xs opacity-80">Scan & pay</div>
+                      <div className="font-medium text-[10px] sm:text-xs">QR Transfer</div>
+                      <div className="text-[9px] sm:text-xs opacity-80">Scan & pay</div>
                     </div>
                   </Button>
                 </div>
@@ -351,12 +353,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 <Button 
                   variant="outline"
                   onClick={() => setShowPinSettings(true)}
-                  className="justify-start h-12"
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
-                  <Lock className="w-5 h-5 mr-3" />
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                   <div className="text-left">
-                    <div className="font-medium">PIN Settings</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-medium text-xs sm:text-sm">PIN Settings</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
                       {profile.pin_enabled ? 'PIN protection enabled' : 'Set up transaction PIN'}
                     </div>
                   </div>
@@ -365,48 +367,48 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 <Button 
                   variant="outline"
                   onClick={() => setShowCardView(true)}
-                  className="justify-start h-12"
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
-                  <CreditCard className="w-5 h-5 mr-3" />
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                   <div className="text-left">
-                    <div className="font-medium">Card Details</div>
-                    <div className="text-xs text-muted-foreground">View card information</div>
+                    <div className="font-medium text-xs sm:text-sm">Card Details</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">View card information</div>
                   </div>
                 </Button>
 
                 <Button 
                   variant="outline"
                   onClick={() => setShowTransactionHistory(true)}
-                  className="justify-start h-12"
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
-                  <History className="w-5 h-5 mr-3" />
+                  <History className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                   <div className="text-left">
-                    <div className="font-medium">Transaction History</div>
-                    <div className="text-xs text-muted-foreground">View account activity</div>
+                    <div className="font-medium text-xs sm:text-sm">Transaction History</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">View account activity</div>
                   </div>
                 </Button>
 
                 <Button 
                   variant="outline"
                   onClick={() => window.location.href = '/settings'}
-                  className="justify-start h-12"
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
-                  <Settings className="w-5 h-5 mr-3" />
+                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                   <div className="text-left">
-                    <div className="font-medium">Account Settings</div>
-                    <div className="text-xs text-muted-foreground">Manage preferences</div>
+                    <div className="font-medium text-xs sm:text-sm">Account Settings</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">Manage preferences</div>
                   </div>
                 </Button>
 
                 <Button 
                   variant="outline"
                   onClick={() => window.location.href = '/profile'}
-                  className="justify-start h-12"
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
-                  <UserIcon className="w-5 h-5 mr-3" />
+                  <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                   <div className="text-left">
-                    <div className="font-medium">Manage Profile</div>
-                    <div className="text-xs text-muted-foreground">Update your information</div>
+                    <div className="font-medium text-xs sm:text-sm">Manage Profile</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">Update your information</div>
                   </div>
                 </Button>
               </div>
@@ -416,18 +418,18 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
 
         {/* Role-specific features */}
         {profile.role === 'ADMIN' && (
-          <Card>
+          <Card className="w-full">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="w-5 h-5 mr-2" />
+              <CardTitle className="flex items-center text-base sm:text-lg">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Admin Controls
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <Button 
                   variant="outline" 
-                  className="justify-start"
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowManageUsers(true)}
                 >
                   <Users className="w-4 h-4 mr-2" />
@@ -435,7 +437,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="justify-start"
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowFundManagement(true)}
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
@@ -443,7 +445,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="justify-start"
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowSystemSettings(true)}
                 >
                   <Settings className="w-4 h-4 mr-2" />
@@ -451,7 +453,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="justify-start"
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowCardPrinting(true)}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
@@ -463,20 +465,20 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         )}
 
         {profile.role === 'AGENT' && (
-          <Card>
+          <Card className="w-full">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="w-5 h-5 mr-2" />
+              <CardTitle className="flex items-center text-base sm:text-lg">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Agent Tools
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="justify-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <Button variant="outline" className="justify-start h-10 sm:h-auto text-xs sm:text-sm">
                   <Users className="w-4 h-4 mr-2" />
                   Client Support
                 </Button>
-                <Button variant="outline" className="justify-start">
+                <Button variant="outline" className="justify-start h-10 sm:h-auto text-xs sm:text-sm">
                   <CreditCard className="w-4 h-4 mr-2" />
                   KYC Review
                 </Button>
