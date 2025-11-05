@@ -32,6 +32,8 @@ import { ManageUsersModal } from "./admin/ManageUsersModal";
 import { FundManagementModal } from "./admin/FundManagementModal";
 import SystemSettingsModal from "./admin/SystemSettingsModal";
 import CardPrintingModal from "./admin/CardPrintingModal";
+import { AnnouncementsModal } from "./admin/AnnouncementsModal";
+import { AnnouncementBanner } from "./AnnouncementBanner";
 
 interface SimpleBankingAppProps {
   user: any;
@@ -53,6 +55,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showFundManagement, setShowFundManagement] = useState(false);
   const [showSystemSettings, setShowSystemSettings] = useState(false);
   const [showCardPrinting, setShowCardPrinting] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -162,6 +165,8 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
             </Button>
           </div>
         </div>
+
+        <AnnouncementBanner />
 
         {/* Alert for role-based access */}
         {profile.role !== 'CLIENT' && (
@@ -426,7 +431,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 <Button 
                   variant="outline" 
                   className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
@@ -458,6 +463,14 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Card Printing
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm col-span-2 sm:col-span-1"
+                  onClick={() => setShowAnnouncements(true)}
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  Announcements
                 </Button>
               </div>
             </CardContent>
@@ -505,6 +518,10 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <CardPrintingModal 
         open={showCardPrinting} 
         onOpenChange={setShowCardPrinting} 
+      />
+      <AnnouncementsModal 
+        open={showAnnouncements} 
+        onOpenChange={setShowAnnouncements} 
       />
 
       {/* User Modals */}

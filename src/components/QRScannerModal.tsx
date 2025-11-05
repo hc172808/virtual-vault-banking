@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface QRScannerModalProps {
   open: boolean;
@@ -482,14 +483,19 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
             <div className="border-t pt-4">
               <Label className="text-sm font-medium">Your QR Code</Label>
               <div className="mt-2 p-4 bg-muted rounded-lg text-center">
-                <div className="w-32 h-32 mx-auto bg-white rounded-lg flex items-center justify-center mb-2">
-                  <QrCode className="w-24 h-24" />
+                <div className="w-48 h-48 mx-auto bg-white p-4 rounded-lg mb-2">
+                  <QRCodeSVG 
+                    value={userQRData} 
+                    size={176}
+                    level="H"
+                    includeMargin={false}
+                  />
                 </div>
-                <p className="text-xs text-muted-foreground font-mono break-all">
-                  {userQRData}
+                <p className="text-xs text-muted-foreground mt-2">
+                  <strong>{userProfile?.full_name}</strong>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Show this to receive money
+                  Show this QR code to receive money
                 </p>
               </div>
             </div>
