@@ -139,51 +139,83 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     setIsLoading(true);
     try {
       const { type, amount, recipient, description } = transaction;
-      
-      // Calculate new balance
-      const currentBalance = userProfile?.balance || 0;
-      const newBalance = type === 'send' 
-        ? currentBalance - amount 
-        : currentBalance + amount;
 
-      // Update user balance
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ balance: newBalance })
-        .eq('user_id', userId);
-
-      if (updateError) throw updateError;
-
-      // Log the transaction
-      await supabase
-        .from('activity_logs')
-        .insert({
-          action_type: type === 'send' ? 'MONEY_SENT' : 'MONEY_RECEIVED',
-          description: `${type === 'send' ? 'Sent' : 'Received'} $${amount.toFixed(2)} ${type === 'send' ? 'to' : 'from'} ${recipient}${description ? ` - ${description}` : ''}`,
-          user_id: userId,
+      // For security, disable "receive" self-crediting here
+      if (type !== 'send') {
+        toast({
+          title: 'Use QR to receive',
+          description: 'To receive funds, share your QR code via QR Transfer.',
         });
+        return;
+      }
+
+      // Resolve recipient id (accepts UUID or email)
+      const isUuid = (v: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+      let recipientId = '';
+      let recipientLabel = recipient;
+
+      if (isUuid(recipient)) {
+        recipientId = recipient;
+      } else if (recipient.includes('@')) {
+        const { data: rec, error: recErr } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .eq('email', recipient)
+          .maybeSingle();
+        if (recErr) throw recErr;
+        if (!rec) {
+          toast({
+            title: 'Recipient not found',
+            description: 'No user found with that email.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        recipientId = rec.user_id as string;
+        recipientLabel = rec.full_name || recipient;
+      } else {
+        toast({
+          title: 'Invalid recipient',
+          description: 'Enter a valid user ID (UUID) or email address.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Call secure backend transfer (handles fees and balance checks)
+      const { data, error } = await supabase.rpc('process_transfer', {
+        p_recipient_id: recipientId,
+        p_amount: amount,
+        p_description: description || null,
+      });
+      if (error) throw error;
+
+      const result = data as any;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Transfer failed');
+      }
 
       toast({
-        title: "Transaction Successful",
-        description: `${type === 'send' ? 'Sent' : 'Received'} $${amount.toFixed(2)} successfully`,
+        title: 'Transfer complete',
+        description: `Sent $${amount.toFixed(2)} to ${recipientLabel}`,
       });
 
       // Reset form
-      setAmount("");
-      setRecipient("");
-      setDescription("");
-      
-      // Notify parent component
+      setAmount('');
+      setRecipient('');
+      setDescription('');
+
+      // Notify parent and close
       onTransactionComplete?.();
-      
-      // Close modal
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transaction error:', error);
       toast({
-        title: "Transaction Failed",
-        description: "Unable to process transaction. Please try again.",
-        variant: "destructive",
+        title: 'Transaction Failed',
+        description: error?.message || 'Unable to process transaction. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -264,7 +296,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
                 id="recipient"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                placeholder="Email or username"
+                placeholder="Email address or User ID (UUID)"
               />
             </div>
 

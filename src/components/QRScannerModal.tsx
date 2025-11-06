@@ -27,6 +27,7 @@ interface QRScannerModalProps {
   } | null;
   userId: string;
   onTransactionComplete?: () => void;
+  initialMode?: 'scan' | 'manual';
 }
 
 const QRScannerModal: React.FC<QRScannerModalProps> = ({
@@ -35,9 +36,10 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   userProfile,
   userId,
   onTransactionComplete,
+  initialMode = 'scan',
 }) => {
   const { toast } = useToast();
-  const [mode, setMode] = useState<'scan' | 'manual' | 'confirm'>('scan');
+  const [mode, setMode] = useState<'scan' | 'manual' | 'confirm'>(initialMode);
   const [amount, setAmount] = useState("");
   const [recipientCode, setRecipientCode] = useState("");
   const [recipientInfo, setRecipientInfo] = useState<any>(null);
@@ -51,6 +53,11 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   // Generate user's QR code data
   const userQRData = `STABLECOIN:${userId}:${userProfile?.full_name}`;
 
+  // Reset mode when opening
+  useEffect(() => {
+    if (open) setMode(initialMode);
+  }, [open, initialMode]);
+  
   useEffect(() => {
     if (open && mode === 'scan') {
       startCamera();

@@ -47,6 +47,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showPinSettings, setShowPinSettings] = useState(false);
   const [showTransaction, setShowTransaction] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [qrInitialMode, setQrInitialMode] = useState<'scan' | 'manual'>('scan');
   const [showTransactionHistory, setShowTransactionHistory] = useState(false);
   const [cardLocked, setCardLocked] = useState(false);
 
@@ -343,7 +344,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                     </div>
                   </Button>
                   <Button 
-                    onClick={() => setShowQRScanner(true)}
+                    onClick={() => { setQrInitialMode('scan'); setShowQRScanner(true); }}
                     className="justify-start h-12 text-xs sm:text-sm"
                     variant="outline"
                   >
@@ -548,6 +549,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         userProfile={profile}
         userId={user?.id || ''}
         onTransactionComplete={loadProfile}
+        initialMode={qrInitialMode}
       />
       <TransactionHistoryModal
         open={showTransactionHistory}
