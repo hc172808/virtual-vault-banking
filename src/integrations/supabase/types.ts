@@ -289,6 +289,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       process_transfer: {
         Args: {
           p_amount: number
