@@ -153,39 +153,87 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
+          alternate_number: string | null
           avatar_url: string | null
           balance: number | null
+          city: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
           full_name: string
+          gender: string | null
           id: string
+          id_number: string | null
+          id_type: string | null
+          mobile_number: string | null
+          nationality: string | null
+          notify_email: string | null
+          occupation: string | null
           pin_enabled: boolean | null
           pin_hash: string | null
+          referral_code: string | null
+          region: string | null
           role: string
+          tin_number: string | null
           user_id: string
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_number?: string | null
           avatar_url?: string | null
           balance?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email: string
           full_name: string
+          gender?: string | null
           id?: string
+          id_number?: string | null
+          id_type?: string | null
+          mobile_number?: string | null
+          nationality?: string | null
+          notify_email?: string | null
+          occupation?: string | null
           pin_enabled?: boolean | null
           pin_hash?: string | null
+          referral_code?: string | null
+          region?: string | null
           role?: string
+          tin_number?: string | null
           user_id: string
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_number?: string | null
           avatar_url?: string | null
           balance?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
           full_name?: string
+          gender?: string | null
           id?: string
+          id_number?: string | null
+          id_type?: string | null
+          mobile_number?: string | null
+          nationality?: string | null
+          notify_email?: string | null
+          occupation?: string | null
           pin_enabled?: boolean | null
           pin_hash?: string | null
+          referral_code?: string | null
+          region?: string | null
           role?: string
+          tin_number?: string | null
           user_id?: string
         }
         Relationships: []
