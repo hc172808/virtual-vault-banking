@@ -466,35 +466,76 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ open, onOpenC
 
                 <div className="space-y-4">
                   <h3 className="font-semibold">Transaction Fees</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-6">
                     <div>
-                      <Label htmlFor="fee-percentage">Transfer Fee Percentage (%)</Label>
-                      <Input
-                        id="fee-percentage"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="10"
-                        value={transactionLimits.transferFeePercentage}
-                        onChange={(e) =>
-                          setTransactionLimits(prev => ({ ...prev, transferFeePercentage: e.target.value }))
-                        }
-                      />
+                      <h4 className="text-sm font-medium mb-3">Sender Fees</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="fee-percentage">Sender Fee Percentage (%)</Label>
+                          <Input
+                            id="fee-percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="10"
+                            value={transactionLimits.transferFeePercentage}
+                            onChange={(e) =>
+                              setTransactionLimits(prev => ({ ...prev, transferFeePercentage: e.target.value }))
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="fee-fixed">Sender Fixed Fee ($)</Label>
+                          <Input
+                            id="fee-fixed"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={transactionLimits.transferFeeFixed}
+                            onChange={(e) =>
+                              setTransactionLimits(prev => ({ ...prev, transferFeeFixed: e.target.value }))
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="fee-fixed">Fixed Transfer Fee ($)</Label>
-                      <Input
-                        id="fee-fixed"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={transactionLimits.transferFeeFixed}
-                        onChange={(e) =>
-                          setTransactionLimits(prev => ({ ...prev, transferFeeFixed: e.target.value }))
-                        }
-                      />
+                      <h4 className="text-sm font-medium mb-3">Receiver Fees</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="receiver-fee-percentage">Receiver Fee Percentage (%)</Label>
+                          <Input
+                            id="receiver-fee-percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="10"
+                            defaultValue="0.5"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="receiver-fee-fixed">Receiver Fixed Fee ($)</Label>
+                          <Input
+                            id="receiver-fee-fixed"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            defaultValue="0.25"
+                          />
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Transfer Limits</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div>
                       <Label htmlFor="min-transfer">Minimum Transfer Amount ($)</Label>

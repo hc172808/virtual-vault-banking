@@ -136,20 +136,51 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
           setUnreadCount(prev => prev + 1);
 
-          // Show toast notification for important events
-          if (type === 'transaction' || type === 'fund') {
-            toast({
-              title: newNotification.title,
-              description: newNotification.message,
-              duration: 5000,
-            });
-          }
+      // Show toast notification for important events
+      if (type === 'transaction' || type === 'fund') {
+        toast({
+          title: newNotification.title,
+          description: newNotification.message,
+          duration: 5000,
+        });
+      }
+    }
+  )
+  .subscribe();
+
+    // Also listen for payment requests
+    const requestChannel = supabase
+      .channel('payment_requests_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'payment_requests',
+          filter: `recipient_id=eq.${userId}`,
+        },
+        async (payload) => {
+          const newRequest = payload.new;
+          
+          // Fetch sender info
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', newRequest.sender_id)
+            .single();
+
+          toast({
+            title: "New Payment Request",
+            description: `${sender?.full_name || 'Someone'} is requesting $${newRequest.amount}`,
+            duration: 10000,
+          });
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(requestChannel);
     };
   };
 

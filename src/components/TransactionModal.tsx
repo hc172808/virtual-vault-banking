@@ -140,12 +140,63 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     try {
       const { type, amount, recipient, description } = transaction;
 
-      // For security, disable "receive" self-crediting here
-      if (type !== 'send') {
+      // Handle payment request
+      if (type === 'receive') {
+        const isUuid = (v: string) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+        let recipientId = '';
+
+        if (isUuid(recipient)) {
+          recipientId = recipient;
+        } else if (recipient.includes('@')) {
+          const { data: rec, error: recErr } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('email', recipient)
+            .maybeSingle();
+          if (recErr) throw recErr;
+          if (!rec) {
+            toast({
+              title: 'Recipient not found',
+              description: 'No user found with that email.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          recipientId = rec.user_id as string;
+        } else {
+          toast({
+            title: 'Invalid recipient',
+            description: 'Enter a valid user ID (UUID) or email address.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Create payment request
+        const { error } = await supabase
+          .from('payment_requests')
+          .insert({
+            sender_id: userId,
+            recipient_id: recipientId,
+            amount: amount,
+            description: description || null,
+            status: 'pending',
+          });
+
+        if (error) throw error;
+
         toast({
-          title: 'Use QR to receive',
-          description: 'To receive funds, share your QR code via QR Transfer.',
+          title: 'Request Sent',
+          description: `Payment request for $${amount.toFixed(2)} has been sent`,
         });
+
+        setAmount('');
+        setRecipient('');
+        setDescription('');
+        onTransactionComplete?.();
+        onOpenChange(false);
         return;
       }
 

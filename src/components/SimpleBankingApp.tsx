@@ -28,6 +28,8 @@ import TransactionModal from "./TransactionModal";
 import QRScannerModal from "./QRScannerModal";
 import TransactionHistoryModal from "./TransactionHistoryModal";
 import NotificationSystem from "./NotificationSystem";
+import PWAInstallButton from "./PWAInstallButton";
+import PaymentRequestsModal from "./PaymentRequestsModal";
 import { ManageUsersModal } from "./admin/ManageUsersModal";
 import { FundManagementModal } from "./admin/FundManagementModal";
 import SystemSettingsModal from "./admin/SystemSettingsModal";
@@ -49,6 +51,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [qrInitialMode, setQrInitialMode] = useState<'scan' | 'manual'>('scan');
   const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const [showPaymentRequests, setShowPaymentRequests] = useState(false);
   const [cardLocked, setCardLocked] = useState(false);
 
   // Admin modals
@@ -168,6 +171,8 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         </div>
 
         <AnnouncementBanner />
+
+        <PWAInstallButton />
 
         {/* Alert for role-based access */}
         {profile.role !== 'CLIENT' && (
@@ -396,6 +401,18 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
 
                 <Button 
                   variant="outline"
+                  onClick={() => setShowPaymentRequests(true)}
+                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
+                >
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                  <div className="text-left">
+                    <div className="font-medium text-xs sm:text-sm">Payment Requests</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">View pending requests</div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
                   onClick={() => window.location.href = '/settings'}
                   className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
                 >
@@ -555,6 +572,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         open={showTransactionHistory}
         onOpenChange={setShowTransactionHistory}
         userId={user?.id || ''}
+      />
+      <PaymentRequestsModal
+        open={showPaymentRequests}
+        onOpenChange={setShowPaymentRequests}
+        userId={user?.id || ''}
+        onRequestProcessed={loadProfile}
       />
     </div>
   );
