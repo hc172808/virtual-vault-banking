@@ -236,11 +236,7 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
               <CardContent className="flex flex-col items-center">
                 <div className="bg-white p-3 rounded-lg">
                   <QRCodeSVG 
-                    value={JSON.stringify({ 
-                      userId: userProfile.user_id,
-                      name: userProfile.full_name,
-                      type: 'receive'
-                    })}
+                    value={`STABLECOIN:${userProfile.user_id}:${userProfile.full_name}`}
                     size={150}
                     level="H"
                   />

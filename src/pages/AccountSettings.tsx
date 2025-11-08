@@ -51,6 +51,29 @@ const AccountSettings: React.FC = () => {
   const handleSettingChange = async (key: string, value: boolean) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     
+    // Save to database if it's a database-backed setting
+    if (key === 'pinEnabled') {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ pin_enabled: value })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error saving setting:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save setting",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     toast({
       title: "Setting Updated",
       description: `${key.replace(/([A-Z])/g, ' $1').trim()} has been ${value ? 'enabled' : 'disabled'}`,

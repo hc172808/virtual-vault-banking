@@ -282,9 +282,8 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
           </Card>
         </div>
 
-        {/* Virtual Card & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
-          {/* Virtual Card */}
+        {/* Virtual Card */}
+        <div className="w-full">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -359,120 +358,6 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                     {cardLocked ? 'Unlock' : 'Lock'}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Send className="w-5 h-5 mr-2" />
-                Quick Actions
-              </CardTitle>
-              <CardDescription>
-                Manage your account and transactions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4">
-              <div className="grid grid-cols-1 gap-2 sm:gap-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    onClick={() => setShowTransaction(true)}
-                    className="justify-start h-12 text-xs sm:text-sm"
-                  >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium text-[10px] sm:text-xs">Send Money</div>
-                      <div className="text-[9px] sm:text-xs opacity-80">Bank transfer</div>
-                    </div>
-                  </Button>
-                  <Button 
-                    onClick={() => { setQrInitialMode('scan'); setShowQRScanner(true); }}
-                    className="justify-start h-12 text-xs sm:text-sm"
-                    variant="outline"
-                  >
-                    <QrCode className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium text-[10px] sm:text-xs">QR Transfer</div>
-                      <div className="text-[9px] sm:text-xs opacity-80">Scan & pay</div>
-                    </div>
-                  </Button>
-                </div>
-                
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowPinSettings(true)}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">PIN Settings</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">
-                      {profile.pin_enabled ? 'PIN protection enabled' : 'Set up transaction PIN'}
-                    </div>
-                  </div>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowCardView(true)}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">Card Details</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">View card information</div>
-                  </div>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowTransactionHistory(true)}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <History className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">Transaction History</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">View account activity</div>
-                  </div>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowPaymentRequests(true)}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">Payment Requests</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">View pending requests</div>
-                  </div>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = '/settings'}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">Account Settings</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">Manage preferences</div>
-                  </div>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = '/profile'}
-                  className="justify-start h-10 sm:h-12 text-xs sm:text-sm"
-                >
-                  <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs sm:text-sm">Manage Profile</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">Update your information</div>
-                  </div>
-                </Button>
               </div>
             </CardContent>
           </Card>
