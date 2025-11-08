@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AccountSettings from "./pages/AccountSettings";
 import ManageProfile from "./pages/ManageProfile";
+import MobileLanding from "./pages/MobileLanding";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/mobile" element={<MobileLanding />} />
           <Route path="/settings" element={<AccountSettings />} />
           <Route path="/profile" element={<ManageProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

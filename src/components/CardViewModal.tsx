@@ -6,12 +6,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Eye, EyeOff, Copy, Lock } from "lucide-react";
+import { CreditCard, Eye, EyeOff, Copy, Lock, QrCode as QrCodeIcon } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 interface CardViewModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface CardViewModalProps {
     full_name: string;
     email: string;
     balance: number;
+    user_id?: string;
   } | null;
 }
 
@@ -218,6 +220,37 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
               </div>
             </CardContent>
           </Card>
+
+          {/* QR Code for Receiving Funds */}
+          {userProfile?.user_id && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center">
+                  <QrCodeIcon className="w-4 h-4 mr-2" />
+                  Receive Funds
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Share this QR code to receive payments
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center">
+                <div className="bg-white p-3 rounded-lg">
+                  <QRCodeSVG 
+                    value={JSON.stringify({ 
+                      userId: userProfile.user_id,
+                      name: userProfile.full_name,
+                      type: 'receive'
+                    })}
+                    size={150}
+                    level="H"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Others can scan this to send you money
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DialogContent>
     </Dialog>

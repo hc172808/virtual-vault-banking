@@ -30,12 +30,15 @@ import TransactionHistoryModal from "./TransactionHistoryModal";
 import NotificationSystem from "./NotificationSystem";
 import PWAInstallButton from "./PWAInstallButton";
 import PaymentRequestsModal from "./PaymentRequestsModal";
+import NavigationMenu from "./NavigationMenu";
+import AdminAnalyticsDashboard from "./admin/AdminAnalyticsDashboard";
 import { ManageUsersModal } from "./admin/ManageUsersModal";
 import { FundManagementModal } from "./admin/FundManagementModal";
 import SystemSettingsModal from "./admin/SystemSettingsModal";
 import CardPrintingModal from "./admin/CardPrintingModal";
 import { AnnouncementsModal } from "./admin/AnnouncementsModal";
 import { AnnouncementBanner } from "./AnnouncementBanner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
   user: any;
@@ -53,6 +56,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showTransactionHistory, setShowTransactionHistory] = useState(false);
   const [showPaymentRequests, setShowPaymentRequests] = useState(false);
   const [cardLocked, setCardLocked] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   // Admin modals
   const [showManageUsers, setShowManageUsers] = useState(false);
@@ -119,6 +123,40 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
     }
   };
 
+  const handleMenuItemClick = (itemId: string) => {
+    switch (itemId) {
+      case 'pin':
+        setShowPinSettings(true);
+        break;
+      case 'card':
+        setShowCardView(true);
+        break;
+      case 'history':
+        setShowTransactionHistory(true);
+        break;
+      case 'requests':
+        setShowPaymentRequests(true);
+        break;
+      case 'settings':
+        window.location.href = '/settings';
+        break;
+      case 'profile':
+        window.location.href = '/profile';
+        break;
+      case 'analytics':
+        setShowAnalytics(true);
+        break;
+      case 'admin':
+        // Show admin menu or modal
+        break;
+      default:
+        toast({
+          title: "Coming Soon",
+          description: `${itemId} feature is under development`,
+        });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -157,6 +195,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
             </p>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-end">
+            <NavigationMenu userRole={profile.role} onMenuItemClick={handleMenuItemClick} />
             <NotificationSystem userId={user?.id || ''} />
             <Button 
               variant="outline" 
@@ -294,16 +333,16 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCardView(true)}
-                    className="w-full text-xs sm:text-sm"
-                  >
-                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">View Card</span>
-                    <span className="sm:hidden">View</span>
-                  </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCardView(true)}
+                className="w-full text-xs sm:text-sm"
+              >
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">View Card & QR</span>
+                <span className="sm:hidden">View</span>
+              </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -546,7 +585,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <CardViewModal
         open={showCardView}
         onOpenChange={setShowCardView}
-        userProfile={profile}
+        userProfile={profile ? { ...profile, user_id: user?.id } : null}
       />
       <PinSettingsModal
         open={showPinSettings}
@@ -579,6 +618,16 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         userId={user?.id || ''}
         onRequestProcessed={loadProfile}
       />
+
+      {/* Analytics Modal */}
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Analytics Dashboard</DialogTitle>
+          </DialogHeader>
+          <AdminAnalyticsDashboard />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
