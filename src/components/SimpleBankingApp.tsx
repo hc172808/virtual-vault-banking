@@ -38,6 +38,7 @@ import SystemSettingsModal from "./admin/SystemSettingsModal";
 import CardPrintingModal from "./admin/CardPrintingModal";
 import { AnnouncementsModal } from "./admin/AnnouncementsModal";
 import { AnnouncementBanner } from "./AnnouncementBanner";
+import DatabaseBackupModal from "./admin/DatabaseBackupModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -64,6 +65,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showSystemSettings, setShowSystemSettings] = useState(false);
   const [showCardPrinting, setShowCardPrinting] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [showDatabaseBackup, setShowDatabaseBackup] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -145,6 +147,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'analytics':
         setShowAnalytics(true);
+        break;
+      case 'database':
+        setShowDatabaseBackup(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -513,6 +518,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
           <AdminAnalyticsDashboard />
         </DialogContent>
       </Dialog>
+
+      {/* Database Backup Modal */}
+      <DatabaseBackupModal
+        open={showDatabaseBackup}
+        onOpenChange={setShowDatabaseBackup}
+      />
     </div>
   );
 }
