@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
 import { QRCodeSVG } from 'qrcode.react';
+import jsQR from 'jsqr';
 
 interface QRScannerModalProps {
   open: boolean;
@@ -47,11 +48,99 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [showPinVerification, setShowPinVerification] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const [feeInfo, setFeeInfo] = useState({ percentage: 0, fixed: 0, total: 0 });
+  const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Generate user's QR code data
   const userQRData = `STABLECOIN:${userId}:${userProfile?.full_name}`;
+
+  const stopCamera = useCallback(() => {
+    // Stop scanning interval
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    setIsScanning(false);
+    
+    // Stop camera stream
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  }, []);
+
+  const processScannedCode = useCallback((code: string) => {
+    // Stop the camera immediately when QR code is detected
+    stopCamera();
+    
+    // Parse the QR code data
+    if (code.startsWith('STABLECOIN:')) {
+      const parts = code.split(':');
+      if (parts.length >= 3) {
+        const recipientId = parts[1];
+        const recipientName = parts[2];
+        
+        // Check if user is trying to send to themselves
+        if (recipientId === userId) {
+          toast({
+            title: "Invalid Recipient",
+            description: "You cannot send money to yourself",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        setRecipientInfo({
+          id: recipientId,
+          name: recipientName,
+        });
+        setMode('confirm');
+        
+        toast({
+          title: "QR Code Scanned",
+          description: `Found recipient: ${recipientName}`,
+        });
+      } else {
+        toast({
+          title: "Invalid QR Code",
+          description: "The scanned code is not valid",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Invalid QR Code",
+        description: "Please scan a valid StableCoin QR code",
+        variant: "destructive",
+      });
+    }
+  }, [stopCamera, userId, toast]);
+
+  const scanQRCode = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current || !isScanning) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
+    
+    if (code && code.data) {
+      processScannedCode(code.data);
+    }
+  }, [isScanning, processScannedCode]);
 
   // Reset mode when opening
   useEffect(() => {
@@ -67,7 +156,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
     
     return () => stopCamera();
-  }, [open, mode]);
+  }, [open, mode, stopCamera]);
 
   const loadFeeSettings = async () => {
     try {
@@ -103,6 +192,12 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        setIsScanning(true);
+        
+        // Start scanning interval
+        scanIntervalRef.current = setInterval(() => {
+          scanQRCode();
+        }, 250); // Scan every 250ms
       }
     } catch (error) {
       toast({
@@ -111,13 +206,6 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
         variant: "destructive",
       });
       setMode('manual');
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
     }
   };
 
