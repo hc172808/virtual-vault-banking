@@ -39,6 +39,7 @@ import CardPrintingModal from "./admin/CardPrintingModal";
 import { AnnouncementsModal } from "./admin/AnnouncementsModal";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import DatabaseBackupModal from "./admin/DatabaseBackupModal";
+import BlockchainConfigModal from "./admin/BlockchainConfigModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -66,6 +67,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showCardPrinting, setShowCardPrinting] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showDatabaseBackup, setShowDatabaseBackup] = useState(false);
+  const [showBlockchainConfig, setShowBlockchainConfig] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -150,6 +152,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'database':
         setShowDatabaseBackup(true);
+        break;
+      case 'blockchain':
+        setShowBlockchainConfig(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -236,9 +241,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${profile.balance?.toFixed(2) || '0.00'}</div>
+              <div className="text-2xl font-bold">{profile.balance?.toFixed(2) || '0.00'} GYD</div>
               <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                ≈ ${profile.balance?.toFixed(2) || '0.00'} USD
               </p>
             </CardContent>
           </Card>
@@ -523,6 +528,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <DatabaseBackupModal
         open={showDatabaseBackup}
         onOpenChange={setShowDatabaseBackup}
+      />
+
+      {/* Blockchain Config Modal */}
+      <BlockchainConfigModal
+        open={showBlockchainConfig}
+        onOpenChange={setShowBlockchainConfig}
       />
     </div>
   );
