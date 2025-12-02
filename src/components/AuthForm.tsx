@@ -51,11 +51,19 @@ const AuthForm = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message === "Failed to fetch") {
+            throw new Error("Network error. Please check your connection and try again.");
+          }
+          throw error;
+        }
+        if (!data.user) {
+          throw new Error("Login failed. Please try again.");
+        }
         toast.success("Signed in successfully!");
       } else {
         // Sign up the user
@@ -70,7 +78,12 @@ const AuthForm = () => {
           },
         });
         
-        if (authError) throw authError;
+        if (authError) {
+          if (authError.message === "Failed to fetch") {
+            throw new Error("Network error. Please check your connection and try again.");
+          }
+          throw authError;
+        }
         
         // Update profile with additional information
         if (authData.user) {
@@ -105,7 +118,16 @@ const AuthForm = () => {
         toast.success("Account created successfully!");
       }
     } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      const errorMessage = error.message || "Authentication failed";
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
+        toast.error("Network error. Please check your internet connection and try again.");
+      } else if (errorMessage.includes("Invalid login credentials")) {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (errorMessage.includes("User already registered")) {
+        toast.error("This email is already registered. Please sign in instead.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
