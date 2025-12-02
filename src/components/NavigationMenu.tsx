@@ -23,7 +23,8 @@ import {
   Shield,
   Wrench,
   BarChart3,
-  Database
+  Database,
+  Coins
 } from "lucide-react";
 
 interface NavigationMenuProps {
@@ -46,6 +47,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ userRole, onMenuItemCli
     { id: 'support', label: 'Client Support', icon: Headphones, roles: ['AGENT', 'ADMIN'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['ADMIN'] },
     { id: 'database', label: 'Database Backup', icon: Database, roles: ['ADMIN'] },
+    { id: 'blockchain', label: 'GYD Blockchain', icon: Coins, roles: ['ADMIN'] },
     { id: 'admin', label: 'Admin Controls', icon: Shield, roles: ['ADMIN'] },
   ];
 
