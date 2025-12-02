@@ -7,14 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { generateWalletKeyPair, encryptPrivateKey } from "@/lib/wallet";
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Basic fields
   const [email, setEmail] = useState("");
@@ -45,10 +47,12 @@ const AuthForm = () => {
   const [tinNumber, setTinNumber] = useState("");
   const [referralCode, setReferralCode] = useState("");
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000;
 
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const attemptAuth = async (attempt: number = 1): Promise<void> => {
     try {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -56,6 +60,11 @@ const AuthForm = () => {
           password,
         });
         if (error) {
+          if (error.message === "Failed to fetch" && attempt < MAX_RETRIES) {
+            toast.info(`Connection failed. Retrying... (${attempt}/${MAX_RETRIES})`);
+            await delay(RETRY_DELAY);
+            return attemptAuth(attempt + 1);
+          }
           if (error.message === "Failed to fetch") {
             throw new Error("Network error. Please check your connection and try again.");
           }
@@ -66,6 +75,11 @@ const AuthForm = () => {
         }
         toast.success("Signed in successfully!");
       } else {
+        // Generate GYD wallet for new user
+        toast.info("Generating your GYD wallet...");
+        const wallet = await generateWalletKeyPair();
+        const encryptedPrivateKey = await encryptPrivateKey(wallet.privateKey, password);
+        
         // Sign up the user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
@@ -74,18 +88,24 @@ const AuthForm = () => {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
+              wallet_address: wallet.address,
             },
           },
         });
         
         if (authError) {
+          if (authError.message === "Failed to fetch" && attempt < MAX_RETRIES) {
+            toast.info(`Connection failed. Retrying... (${attempt}/${MAX_RETRIES})`);
+            await delay(RETRY_DELAY);
+            return attemptAuth(attempt + 1);
+          }
           if (authError.message === "Failed to fetch") {
             throw new Error("Network error. Please check your connection and try again.");
           }
           throw authError;
         }
         
-        // Update profile with additional information
+        // Update profile with additional information including wallet
         if (authData.user) {
           const { error: profileError } = await supabase
             .from("profiles")
@@ -107,6 +127,9 @@ const AuthForm = () => {
               id_number: idNumber,
               tin_number: tinNumber,
               referral_code: referralCode,
+              wallet_address: wallet.address,
+              wallet_public_key: wallet.publicKey,
+              encrypted_private_key: encryptedPrivateKey,
             })
             .eq("user_id", authData.user.id);
           
@@ -115,8 +138,21 @@ const AuthForm = () => {
           }
         }
         
-        toast.success("Account created successfully!");
+        toast.success("Account created with GYD wallet!");
+        toast.info(`Your wallet address: ${wallet.address.substring(0, 10)}...`);
       }
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setRetryCount(0);
+
+    try {
+      await attemptAuth(1);
     } catch (error: any) {
       const errorMessage = error.message || "Authentication failed";
       if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
