@@ -40,6 +40,10 @@ import { AnnouncementsModal } from "./admin/AnnouncementsModal";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import DatabaseBackupModal from "./admin/DatabaseBackupModal";
 import BlockchainConfigModal from "./admin/BlockchainConfigModal";
+import KYCReviewModal from "./KYCReviewModal";
+import AgentToolsModal from "./AgentToolsModal";
+import ClientSupportModal from "./ClientSupportModal";
+import ReceiveFundsModal from "./ReceiveFundsModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -59,6 +63,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showPaymentRequests, setShowPaymentRequests] = useState(false);
   const [cardLocked, setCardLocked] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showReceiveFunds, setShowReceiveFunds] = useState(false);
 
   // Admin modals
   const [showManageUsers, setShowManageUsers] = useState(false);
@@ -68,6 +73,11 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showDatabaseBackup, setShowDatabaseBackup] = useState(false);
   const [showBlockchainConfig, setShowBlockchainConfig] = useState(false);
+  
+  // Agent/Admin modals
+  const [showKYCReview, setShowKYCReview] = useState(false);
+  const [showAgentTools, setShowAgentTools] = useState(false);
+  const [showClientSupport, setShowClientSupport] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -155,6 +165,15 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'blockchain':
         setShowBlockchainConfig(true);
+        break;
+      case 'kyc':
+        setShowKYCReview(true);
+        break;
+      case 'agent-tools':
+        setShowAgentTools(true);
+        break;
+      case 'support':
+        setShowClientSupport(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -341,7 +360,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </div>
               </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="mt-4 grid grid-cols-3 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -349,8 +368,18 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 className="w-full text-xs sm:text-sm"
               >
                 <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">View Card & QR</span>
+                <span className="hidden sm:inline">View</span>
                 <span className="sm:hidden">View</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-xs sm:text-sm"
+                onClick={() => setShowReceiveFunds(true)}
+              >
+                <QrCode className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Receive</span>
+                <span className="sm:hidden">Receive</span>
               </Button>
                   <Button 
                     variant="outline" 
@@ -438,14 +467,30 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <Button variant="outline" className="justify-start h-10 sm:h-auto text-xs sm:text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowClientSupport(true)}
+                >
                   <Users className="w-4 h-4 mr-2" />
                   Client Support
                 </Button>
-                <Button variant="outline" className="justify-start h-10 sm:h-auto text-xs sm:text-sm">
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowKYCReview(true)}
+                >
                   <CreditCard className="w-4 h-4 mr-2" />
                   KYC Review
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowAgentTools(true)}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Agent Tools
                 </Button>
               </div>
             </CardContent>
@@ -534,6 +579,32 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <BlockchainConfigModal
         open={showBlockchainConfig}
         onOpenChange={setShowBlockchainConfig}
+      />
+
+      {/* KYC Review Modal */}
+      <KYCReviewModal
+        open={showKYCReview}
+        onOpenChange={setShowKYCReview}
+      />
+
+      {/* Agent Tools Modal */}
+      <AgentToolsModal
+        open={showAgentTools}
+        onOpenChange={setShowAgentTools}
+      />
+
+      {/* Client Support Modal */}
+      <ClientSupportModal
+        open={showClientSupport}
+        onOpenChange={setShowClientSupport}
+      />
+
+      {/* Receive Funds Modal */}
+      <ReceiveFundsModal
+        open={showReceiveFunds}
+        onOpenChange={setShowReceiveFunds}
+        userId={user?.id || ''}
+        userName={profile?.full_name || ''}
       />
     </div>
   );
