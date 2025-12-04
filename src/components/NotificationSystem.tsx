@@ -148,7 +148,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
   )
   .subscribe();
 
-    // Also listen for payment requests
+    // Listen for payment requests
     const requestChannel = supabase
       .channel('payment_requests_changes')
       .on(
@@ -178,9 +178,59 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       )
       .subscribe();
 
+    // Listen for incoming transactions (when funds received via QR code)
+    const transactionChannel = supabase
+      .channel('transaction_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `recipient_id=eq.${userId}`,
+        },
+        async (payload) => {
+          const transaction = payload.new as any;
+          
+          // Fetch sender info
+          const { data: senderProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', transaction.sender_id)
+            .maybeSingle();
+
+          const senderName = senderProfile?.full_name || 'Someone';
+          const amount = transaction.amount;
+
+          // Show prominent toast notification for received payment
+          toast({
+            title: "💰 Payment Received!",
+            description: `${senderName} sent you $${parseFloat(amount).toFixed(2)} GYD`,
+            duration: 8000,
+          });
+
+          // Add to notifications list
+          const newNotification: Notification = {
+            id: transaction.id,
+            title: 'Payment Received',
+            message: `${senderName} sent you $${parseFloat(amount).toFixed(2)} GYD`,
+            type: 'transaction',
+            timestamp: new Date(),
+            read: false,
+            amount: parseFloat(amount),
+            transactionType: 'credit',
+          };
+
+          setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
+          setUnreadCount(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(requestChannel);
+      supabase.removeChannel(transactionChannel);
     };
   };
 
