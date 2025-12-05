@@ -77,6 +77,68 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          is_agent: boolean
+          message: string
+          sender_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_agent?: boolean
+          message: string
+          sender_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_agent?: boolean
+          message?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       firewall_rules: {
         Row: {
           created_at: string | null
@@ -151,6 +213,39 @@ export type Database = {
           },
         ]
       }
+      knowledge_base: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          id: string
+          is_published: boolean
+          question: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           amount: number
@@ -191,6 +286,7 @@ export type Database = {
           alternate_number: string | null
           avatar_url: string | null
           balance: number | null
+          card_cvv: string | null
           city: string | null
           country: string | null
           created_at: string
@@ -219,6 +315,7 @@ export type Database = {
           alternate_number?: string | null
           avatar_url?: string | null
           balance?: number | null
+          card_cvv?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -247,6 +344,7 @@ export type Database = {
           alternate_number?: string | null
           avatar_url?: string | null
           balance?: number | null
+          card_cvv?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
