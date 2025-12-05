@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Eye, EyeOff, Copy, Lock } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { CreditCard, Eye, EyeOff, Copy, Edit2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 
 interface CardViewModalProps {
   open: boolean;
@@ -22,19 +22,23 @@ interface CardViewModalProps {
     email: string;
     balance: number;
     user_id?: string;
+    card_cvv?: string;
   } | null;
+  onProfileUpdate?: () => void;
 }
 
-const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userProfile }) => {
+const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userProfile, onProfileUpdate }) => {
   const { toast } = useToast();
   const [showCardNumber, setShowCardNumber] = useState(false);
   const [showCVV, setShowCVV] = useState(false);
   const [cardSide, setCardSide] = useState<'front' | 'back'>('front');
+  const [editingCVV, setEditingCVV] = useState(false);
+  const [newCVV, setNewCVV] = useState("");
+  const [savingCVV, setSavingCVV] = useState(false);
 
-  // Generate realistic card details
   const cardNumber = "4532 1234 5678 9012";
   const expiryDate = "12/28";
-  const cvv = "123";
+  const cvv = userProfile?.card_cvv || "123";
   const cardholderName = userProfile?.full_name?.toUpperCase() || "CARDHOLDER NAME";
 
   const copyToClipboard = (text: string, label: string) => {
@@ -49,6 +53,56 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
     setCardSide(cardSide === 'front' ? 'back' : 'front');
   };
 
+  const handleEditCVV = () => {
+    setNewCVV(cvv);
+    setEditingCVV(true);
+  };
+
+  const handleCancelEditCVV = () => {
+    setEditingCVV(false);
+    setNewCVV("");
+  };
+
+  const handleSaveCVV = async () => {
+    if (!userProfile?.user_id) return;
+    
+    if (!/^\d{3}$/.test(newCVV)) {
+      toast({
+        title: "Invalid CVV",
+        description: "CVV must be exactly 3 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingCVV(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ card_cvv: newCVV })
+        .eq('user_id', userProfile.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "CVV Updated",
+        description: "Your card CVV has been changed successfully",
+      });
+
+      setEditingCVV(false);
+      setNewCVV("");
+      onProfileUpdate?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update CVV",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingCVV(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -58,12 +112,12 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             Card Details
           </DialogTitle>
           <DialogDescription>
-            View your card information
+            View and manage your card information
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Compact Card Preview */}
+          {/* Card Preview */}
           <div className="relative">
             <div 
               className="w-full cursor-pointer transform transition-transform hover:scale-105"
@@ -71,7 +125,6 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             >
               <div className="relative w-full aspect-[1.586] rounded-xl shadow-lg overflow-hidden">
                 {cardSide === 'front' ? (
-                  // Card Front
                   <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 text-white relative">
                     <div className="absolute top-3 right-3">
                       <Badge variant="secondary" className="bg-white/20 text-white text-xs px-2 py-0.5">
@@ -105,7 +158,6 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
                     </div>
                   </div>
                 ) : (
-                  // Card Back  
                   <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 text-white relative">
                     <div className="w-full h-8 bg-black mt-3 mb-4"></div>
                     
@@ -136,7 +188,7 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             </div>
           </div>
 
-          {/* Compact Card Controls */}
+          {/* Card Controls */}
           <div className="grid grid-cols-2 gap-3">
             <Card>
               <CardContent className="p-3">
@@ -170,34 +222,73 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
             <Card>
               <CardContent className="p-3">
                 <h3 className="text-xs font-semibold mb-2">CVV</h3>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs">
-                    {showCVV ? cvv : "•••"}
-                  </span>
-                  <div className="flex gap-1">
+                {editingCVV ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="text"
+                      maxLength={3}
+                      value={newCVV}
+                      onChange={(e) => setNewCVV(e.target.value.replace(/\D/g, ''))}
+                      className="h-6 w-12 text-xs font-mono p-1"
+                      placeholder="123"
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0"
-                      onClick={() => setShowCVV(!showCVV)}
+                      onClick={handleSaveCVV}
+                      disabled={savingCVV}
                     >
-                      {showCVV ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      <Check className="w-3 h-3 text-green-600" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0"
-                      onClick={() => copyToClipboard(cvv, "CVV")}
+                      onClick={handleCancelEditCVV}
                     >
-                      <Copy className="w-3 h-3" />
+                      <X className="w-3 h-3 text-red-600" />
                     </Button>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs">
+                      {showCVV ? cvv : "•••"}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setShowCVV(!showCVV)}
+                      >
+                        {showCVV ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={handleEditCVV}
+                        title="Change CVV"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => copyToClipboard(cvv, "CVV")}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Compact Card Info */}
+          {/* Card Info */}
           <Card>
             <CardContent className="p-3">
               <div className="grid grid-cols-2 gap-3 text-xs">
@@ -220,7 +311,6 @@ const CardViewModal: React.FC<CardViewModalProps> = ({ open, onOpenChange, userP
               </div>
             </CardContent>
           </Card>
-
         </div>
       </DialogContent>
     </Dialog>

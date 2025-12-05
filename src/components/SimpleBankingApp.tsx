@@ -44,6 +44,8 @@ import KYCReviewModal from "./KYCReviewModal";
 import AgentToolsModal from "./AgentToolsModal";
 import ClientSupportModal from "./ClientSupportModal";
 import ReceiveFundsModal from "./ReceiveFundsModal";
+import KnowledgeBaseModal from "./KnowledgeBaseModal";
+import LiveChatModal from "./LiveChatModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -78,6 +80,8 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showKYCReview, setShowKYCReview] = useState(false);
   const [showAgentTools, setShowAgentTools] = useState(false);
   const [showClientSupport, setShowClientSupport] = useState(false);
+  const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
+  const [showLiveChat, setShowLiveChat] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -174,6 +178,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'support':
         setShowClientSupport(true);
+        break;
+      case 'faq':
+        setShowKnowledgeBase(true);
+        break;
+      case 'live-chat':
+        setShowLiveChat(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -526,6 +536,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         open={showCardView}
         onOpenChange={setShowCardView}
         userProfile={profile ? { ...profile, user_id: user?.id } : null}
+        onProfileUpdate={loadProfile}
       />
       <PinSettingsModal
         open={showPinSettings}
@@ -605,6 +616,20 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         onOpenChange={setShowReceiveFunds}
         userId={user?.id || ''}
         userName={profile?.full_name || ''}
+      />
+
+      {/* Knowledge Base Modal */}
+      <KnowledgeBaseModal
+        open={showKnowledgeBase}
+        onOpenChange={setShowKnowledgeBase}
+      />
+
+      {/* Live Chat Modal */}
+      <LiveChatModal
+        open={showLiveChat}
+        onOpenChange={setShowLiveChat}
+        userId={user?.id || ''}
+        isAgent={profile?.role === 'AGENT' || profile?.role === 'ADMIN'}
       />
     </div>
   );
