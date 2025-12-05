@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,6 +25,10 @@ import {
   Send,
   Plus,
   Loader2,
+  Paperclip,
+  File,
+  X,
+  Download,
 } from "lucide-react";
 
 interface ClientSupportModalProps {
@@ -54,11 +58,23 @@ interface TicketResponse {
   created_at: string;
 }
 
+interface Attachment {
+  id: string;
+  ticket_id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  content_type: string;
+  created_at: string;
+}
+
 const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [responses, setResponses] = useState<TicketResponse[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [responseText, setResponseText] = useState("");
@@ -69,6 +85,8 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
   const [newTicketSubject, setNewTicketSubject] = useState("");
   const [newTicketMessage, setNewTicketMessage] = useState("");
   const [newTicketPriority, setNewTicketPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -80,6 +98,7 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
   useEffect(() => {
     if (selectedTicket) {
       fetchResponses(selectedTicket.id);
+      fetchAttachments(selectedTicket.id);
     }
   }, [selectedTicket]);
 
@@ -149,6 +168,21 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
     }
   };
 
+  const fetchAttachments = async (ticketId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('support_ticket_attachments')
+        .select('*')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setAttachments(data || []);
+    } catch (error: any) {
+      console.error('Error fetching attachments:', error);
+    }
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = 
       (ticket.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -180,6 +214,67 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
     }
   };
 
+  const sendEmailNotification = async (type: 'status_changed' | 'new_response', ticket: SupportTicket, extra?: any) => {
+    try {
+      await supabase.functions.invoke('send-ticket-notification', {
+        body: {
+          type,
+          ticket_id: ticket.id,
+          recipient_email: ticket.user_email,
+          recipient_name: ticket.user_name,
+          ticket_subject: ticket.subject,
+          ...extra,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to send email notification:', error);
+    }
+  };
+
+  const uploadFiles = async (ticketId: string) => {
+    if (selectedFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      for (const file of selectedFiles) {
+        const filePath = `${ticketId}/${Date.now()}_${file.name}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('support-attachments')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase
+          .from('support_ticket_attachments')
+          .insert({
+            ticket_id: ticketId,
+            file_name: file.name,
+            file_path: filePath,
+            file_size: file.size,
+            content_type: file.type,
+            uploaded_by: user.id,
+          });
+
+        if (dbError) throw dbError;
+      }
+
+      setSelectedFiles([]);
+      toast({ title: "Files uploaded", description: "Attachments added successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
   const handleCreateTicket = async () => {
     if (!newTicketSubject.trim() || !newTicketMessage.trim()) return;
 
@@ -187,16 +282,22 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
+      const { data: newTicket, error } = await supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           subject: newTicketSubject,
           message: newTicketMessage,
           priority: newTicketPriority,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      if (selectedFiles.length > 0 && newTicket) {
+        await uploadFiles(newTicket.id);
+      }
 
       toast({
         title: "Ticket Created",
@@ -205,6 +306,7 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
 
       setNewTicketSubject("");
       setNewTicketMessage("");
+      setSelectedFiles([]);
       setShowNewTicketForm(false);
       fetchTickets();
     } catch (error: any) {
@@ -224,6 +326,12 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       const { error } = await supabase
         .from('support_ticket_responses')
         .insert({
@@ -241,6 +349,12 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
           .update({ status: 'in_progress' })
           .eq('id', selectedTicket.id);
       }
+
+      // Send email notification
+      await sendEmailNotification('new_response', selectedTicket, {
+        responder_name: profile?.full_name || 'Support',
+        response_preview: responseText.substring(0, 200),
+      });
 
       setResponseText("");
       fetchResponses(selectedTicket.id);
@@ -272,6 +386,9 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
 
       if (error) throw error;
 
+      // Send email notification
+      await sendEmailNotification('status_changed', selectedTicket, { new_status: status });
+
       setSelectedTicket({ ...selectedTicket, status });
       fetchTickets();
 
@@ -286,6 +403,44 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
         variant: "destructive",
       });
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const downloadAttachment = async (attachment: Attachment) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('support-attachments')
+        .download(attachment.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.file_name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   const stats = {
@@ -358,12 +513,50 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
               <option value="high">High Priority</option>
               <option value="urgent">Urgent</option>
             </select>
+
+            {/* File upload section */}
+            <div className="space-y-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                multiple
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full"
+              >
+                <Paperclip className="h-4 w-4 mr-2" />
+                Attach Files
+              </Button>
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between bg-muted p-2 rounded">
+                      <div className="flex items-center gap-2">
+                        <File className="h-4 w-4" />
+                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                        <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => removeFile(index)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2">
               <Button onClick={handleCreateTicket} className="flex-1">
                 <Send className="h-4 w-4 mr-2" />
                 Submit Ticket
               </Button>
-              <Button variant="outline" onClick={() => setShowNewTicketForm(false)}>
+              <Button variant="outline" onClick={() => { setShowNewTicketForm(false); setSelectedFiles([]); }}>
                 Cancel
               </Button>
             </div>
@@ -500,7 +693,30 @@ const ClientSupportModal: React.FC<ClientSupportModalProps> = ({ open, onOpenCha
                       </>
                     )}
 
-                    <ScrollArea className="h-[180px]">
+                    {/* Attachments */}
+                    {attachments.length > 0 && (
+                      <>
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Attachments</p>
+                          {attachments.map((att) => (
+                            <div 
+                              key={att.id} 
+                              className="flex items-center justify-between bg-muted/50 p-2 rounded text-xs cursor-pointer hover:bg-muted"
+                              onClick={() => downloadAttachment(att)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <File className="h-4 w-4" />
+                                <span className="truncate max-w-[150px]">{att.file_name}</span>
+                              </div>
+                              <Download className="h-3 w-3" />
+                            </div>
+                          ))}
+                        </div>
+                        <Separator />
+                      </>
+                    )}
+
+                    <ScrollArea className="h-[150px]">
                       <div className="space-y-3">
                         <div className="bg-muted/50 rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-1">
