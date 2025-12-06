@@ -77,6 +77,42 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          key_name: string
+          key_type: string
+          key_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          key_type: string
+          key_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          key_type?: string
+          key_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           agent_id: string | null
@@ -292,6 +328,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           email: string
+          encrypted_private_key: string | null
           full_name: string
           gender: string | null
           id: string
@@ -303,11 +340,13 @@ export type Database = {
           occupation: string | null
           pin_enabled: boolean | null
           pin_hash: string | null
+          public_key: string | null
           referral_code: string | null
           region: string | null
           role: string
           tin_number: string | null
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -321,6 +360,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email: string
+          encrypted_private_key?: string | null
           full_name: string
           gender?: string | null
           id?: string
@@ -332,11 +372,13 @@ export type Database = {
           occupation?: string | null
           pin_enabled?: boolean | null
           pin_hash?: string | null
+          public_key?: string | null
           referral_code?: string | null
           region?: string | null
           role?: string
           tin_number?: string | null
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -350,6 +392,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email?: string
+          encrypted_private_key?: string | null
           full_name?: string
           gender?: string | null
           id?: string
@@ -361,11 +404,13 @@ export type Database = {
           occupation?: string | null
           pin_enabled?: boolean | null
           pin_hash?: string | null
+          public_key?: string | null
           referral_code?: string | null
           region?: string | null
           role?: string
           tin_number?: string | null
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }

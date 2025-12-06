@@ -46,6 +46,8 @@ import ClientSupportModal from "./ClientSupportModal";
 import ReceiveFundsModal from "./ReceiveFundsModal";
 import KnowledgeBaseModal from "./KnowledgeBaseModal";
 import LiveChatModal from "./LiveChatModal";
+import FAQManagementModal from "./admin/FAQManagementModal";
+import APIKeysModal from "./admin/APIKeysModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -82,6 +84,8 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showClientSupport, setShowClientSupport] = useState(false);
   const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(false);
+  const [showFAQManagement, setShowFAQManagement] = useState(false);
+  const [showAPIKeys, setShowAPIKeys] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -184,6 +188,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'live-chat':
         setShowLiveChat(true);
+        break;
+      case 'faq-manage':
+        setShowFAQManagement(true);
+        break;
+      case 'api-keys':
+        setShowAPIKeys(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -630,6 +640,18 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         onOpenChange={setShowLiveChat}
         userId={user?.id || ''}
         isAgent={profile?.role === 'AGENT' || profile?.role === 'ADMIN'}
+      />
+
+      {/* FAQ Management Modal */}
+      <FAQManagementModal
+        open={showFAQManagement}
+        onOpenChange={setShowFAQManagement}
+      />
+
+      {/* API Keys Modal */}
+      <APIKeysModal
+        open={showAPIKeys}
+        onOpenChange={setShowAPIKeys}
       />
     </div>
   );
