@@ -48,6 +48,7 @@ import KnowledgeBaseModal from "./KnowledgeBaseModal";
 import LiveChatModal from "./LiveChatModal";
 import FAQManagementModal from "./admin/FAQManagementModal";
 import APIKeysModal from "./admin/APIKeysModal";
+import WalletManagementModal from "./WalletManagementModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -86,6 +87,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showLiveChat, setShowLiveChat] = useState(false);
   const [showFAQManagement, setShowFAQManagement] = useState(false);
   const [showAPIKeys, setShowAPIKeys] = useState(false);
+  const [showWalletManagement, setShowWalletManagement] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -188,6 +190,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'live-chat':
         setShowLiveChat(true);
+        break;
+      case 'wallet':
+        setShowWalletManagement(true);
         break;
       case 'faq-manage':
         setShowFAQManagement(true);
@@ -652,6 +657,13 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <APIKeysModal
         open={showAPIKeys}
         onOpenChange={setShowAPIKeys}
+      />
+
+      {/* Wallet Management Modal */}
+      <WalletManagementModal
+        open={showWalletManagement}
+        onOpenChange={setShowWalletManagement}
+        userId={user?.id || ''}
       />
     </div>
   );

@@ -21,7 +21,15 @@ import {
   Headphones,
   X,
   Clock,
+  Bell,
+  BellOff,
 } from "lucide-react";
+import {
+  requestNotificationPermission,
+  areNotificationsEnabled,
+  showChatNotification,
+  isDocumentVisible,
+} from "@/lib/notifications";
 
 interface LiveChatModalProps {
   open: boolean;
@@ -57,6 +65,7 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ open, onOpenChange, userI
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(areNotificationsEnabled());
 
   useEffect(() => {
     if (open) {
@@ -164,8 +173,22 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ open, onOpenChange, userI
           table: 'chat_messages',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+        async (payload) => {
+          const newMsg = payload.new as Message;
+          setMessages(prev => [...prev, newMsg]);
+          
+          // Show push notification if user is not viewing the chat
+          if (!isDocumentVisible() && notificationsEnabled) {
+            // Only notify for messages from the other party
+            const isFromOtherParty = isAgent ? !newMsg.is_agent : newMsg.is_agent;
+            if (isFromOtherParty) {
+              showChatNotification(
+                isAgent ? "Customer" : "Support Agent",
+                newMsg.message,
+                conversationId
+              );
+            }
+          }
         }
       )
       .subscribe();
@@ -173,6 +196,23 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ open, onOpenChange, userI
     return () => {
       supabase.removeChannel(channel);
     };
+  };
+
+  const enableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotificationsEnabled(granted);
+    if (granted) {
+      toast({
+        title: "Notifications Enabled",
+        description: "You'll receive notifications for new chat messages",
+      });
+    } else {
+      toast({
+        title: "Notifications Blocked",
+        description: "Please enable notifications in your browser settings",
+        variant: "destructive",
+      });
+    }
   };
 
   const startNewConversation = async () => {
@@ -283,9 +323,23 @@ const LiveChatModal: React.FC<LiveChatModalProps> = ({ open, onOpenChange, userI
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            Live Chat Support
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Live Chat Support
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={enableNotifications}
+              className={notificationsEnabled ? "text-green-600" : "text-muted-foreground"}
+            >
+              {notificationsEnabled ? (
+                <Bell className="h-4 w-4" />
+              ) : (
+                <BellOff className="h-4 w-4" />
+              )}
+            </Button>
           </DialogTitle>
           <DialogDescription>
             {isAgent ? "Manage live chat conversations" : "Chat with our support team in real-time"}

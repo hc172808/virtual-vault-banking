@@ -27,7 +27,8 @@ import {
   Coins,
   BookOpen,
   MessageCircle,
-  Key
+  Key,
+  Wallet
 } from "lucide-react";
 
 interface NavigationMenuProps {
@@ -43,6 +44,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ userRole, onMenuItemCli
     { id: 'card', label: 'Card Details', icon: CreditCard, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
     { id: 'history', label: 'Transaction History', icon: History, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
     { id: 'requests', label: 'Payment Requests', icon: DollarSign, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
+    { id: 'wallet', label: 'GYD Wallet', icon: Wallet, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
     { id: 'faq', label: 'Knowledge Base', icon: BookOpen, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
     { id: 'live-chat', label: 'Live Chat', icon: MessageCircle, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
     { id: 'settings', label: 'Account Settings', icon: Settings, roles: ['CLIENT', 'AGENT', 'ADMIN'] },
