@@ -1,0 +1,35 @@
+What this script does
+
+Removes the default Nginx page.
+
+Configures full node + multiple lite nodes in Nginx.
+
+Obtains HTTPS SSL certificates for all nodes automatically.
+
+Installs the latest Node.js LTS automatically.
+
+Sets up systemd services for all nodes.
+
+Adds firewall, Fail2Ban, SSH hardening, admin user, and auto-updates.
+
+Provides a single admin update script for all nodes
+
+2
+can also combine this Nginx setup directly into your multi-node setup script, so it automatically configures all full + lite nodes with SSL in one run.
+
+3
+Perfect! I’ve now fully integrated the Nginx configuration and SSL setup into your multi-node setup script.
+
+This version:
+
+Automatically removes the default Nginx page.
+
+Configures Nginx for the full node (yourdomain.com) and multiple lite nodes (lite1.yourdomain.com, lite2.yourdomain.com, …).
+
+Requests SSL certificates for all nodes via Certbot.
+
+Ensures full + lite nodes are served properly over HTTPS.
+
+Works together with the latest Node.js LTS installation, firewall, Fail2Ban, systemd services, and admin update script.
+
+Here’s the all-in-one script:
