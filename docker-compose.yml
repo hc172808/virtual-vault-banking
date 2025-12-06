@@ -1,0 +1,52 @@
+version: "3.9"
+
+networks:
+  vault-network:
+    driver: bridge
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: vault-postgres
+    environment:
+      POSTGRES_DB: vaultdb
+      POSTGRES_USER: vaultuser
+      POSTGRES_PASSWORD: "REPLACE_WITH_SECURE_PASSWORD"
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+    networks:
+      - vault-network
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: vault-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@vault.local
+      PGADMIN_DEFAULT_PASSWORD: "REPLACE_WITH_SECURE_PASSWORD"
+    ports:
+      - "8080:80"
+    networks:
+      - vault-network
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    container_name: vault-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - vault-network
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    container_name: vault-grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - vault-network
+    restart: always
