@@ -16,6 +16,7 @@ import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
 import { QRCodeSVG } from 'qrcode.react';
 import jsQR from 'jsqr';
+import { supabase } from "@/integrations/supabase/client";
 
 interface QRScannerModalProps {
   open: boolean;
@@ -160,7 +161,6 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
   const loadFeeSettings = async () => {
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase
         .from('system_settings')
         .select('setting_key, setting_value')
@@ -333,8 +333,6 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const processTransaction = async (transaction: any) => {
     setIsLoading(true);
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      
       // Get fee settings
       const { data: feeData } = await supabase
         .from('system_settings')

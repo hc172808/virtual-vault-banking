@@ -26,7 +26,8 @@ import {
   Database,
   Coins,
   BookOpen,
-  MessageCircle
+  MessageCircle,
+  Key
 } from "lucide-react";
 
 interface NavigationMenuProps {
@@ -50,6 +51,8 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ userRole, onMenuItemCli
     { id: 'agent-tools', label: 'Agent Tools', icon: Wrench, roles: ['AGENT', 'ADMIN'] },
     { id: 'support', label: 'Client Support', icon: Headphones, roles: ['AGENT', 'ADMIN'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['ADMIN'] },
+    { id: 'faq-manage', label: 'Manage FAQs', icon: BookOpen, roles: ['ADMIN'] },
+    { id: 'api-keys', label: 'API Keys & RPC', icon: Key, roles: ['ADMIN'] },
     { id: 'database', label: 'Database Backup', icon: Database, roles: ['ADMIN'] },
     { id: 'blockchain', label: 'GYD Blockchain', icon: Coins, roles: ['ADMIN'] },
     { id: 'admin', label: 'Admin Controls', icon: Shield, roles: ['ADMIN'] },
