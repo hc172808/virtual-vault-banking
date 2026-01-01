@@ -92,6 +92,35 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   useEffect(() => {
     if (user) {
       loadProfile();
+      
+      // Subscribe to real-time balance updates
+      const channel = supabase
+        .channel('profile-balance-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('Balance updated:', payload);
+            setProfile((prev: any) => ({
+              ...prev,
+              balance: payload.new.balance,
+            }));
+            toast({
+              title: "Balance Updated",
+              description: `Your balance is now ${payload.new.balance?.toFixed(2)} GYD`,
+            });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

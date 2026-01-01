@@ -37,8 +37,10 @@ import {
   ExternalLink,
   Shield,
   AlertTriangle,
+  QrCode,
 } from "lucide-react";
 import { shortenAddress, isValidAddress } from "@/lib/wallet";
+import { QRCodeSVG } from "qrcode.react";
 
 interface WalletManagementModalProps {
   open: boolean;
@@ -202,6 +204,38 @@ const WalletManagementModal: React.FC<WalletManagementModalProps> = ({
           </Alert>
         ) : (
           <div className="space-y-6">
+            {/* Wallet QR Code */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Receive Funds
+                </CardTitle>
+                <CardDescription>Share this QR code to receive GYD</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center space-y-4">
+                <div className="bg-white p-4 rounded-xl shadow-lg">
+                  <QRCodeSVG
+                    value={`STABLECOIN:${userId}:${walletAddress || 'wallet'}`}
+                    size={180}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Scan this QR code to send funds to your wallet
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => copyToClipboard(walletAddress, "Wallet address")}
+                  className="w-full"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Wallet Address
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Wallet Overview */}
             <Card>
               <CardHeader>

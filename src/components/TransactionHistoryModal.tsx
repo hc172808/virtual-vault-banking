@@ -24,8 +24,11 @@ import {
   Calendar,
   DollarSign,
   Search,
-  Download
+  Download,
+  FileText
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface TransactionHistoryModalProps {
   open: boolean;
@@ -159,7 +162,7 @@ const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = ({
     return '';
   };
 
-  const exportTransactions = () => {
+  const exportCSV = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Date,Type,Description,Amount\n"
       + filteredTransactions.map(t => 
@@ -176,7 +179,60 @@ const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = ({
 
     toast({
       title: "Export Complete",
-      description: "Transaction history exported successfully",
+      description: "CSV exported successfully",
+    });
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Transaction History", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 30);
+    
+    // Summary
+    const totalIn = filteredTransactions
+      .filter(t => t.type === 'credit')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    const totalOut = filteredTransactions
+      .filter(t => t.type === 'debit')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(40);
+    doc.text(`Total Transactions: ${filteredTransactions.length}`, 14, 42);
+    doc.setTextColor(34, 139, 34);
+    doc.text(`Money In: $${totalIn.toFixed(2)}`, 14, 50);
+    doc.setTextColor(220, 53, 69);
+    doc.text(`Money Out: $${totalOut.toFixed(2)}`, 14, 58);
+    
+    // Table
+    const tableData = filteredTransactions.map(t => [
+      new Date(t.created_at).toLocaleDateString(),
+      t.action_type.replace(/_/g, ' '),
+      t.description.substring(0, 40) + (t.description.length > 40 ? '...' : ''),
+      t.type === 'debit' ? `-$${t.amount?.toFixed(2) || '0.00'}` : `+$${t.amount?.toFixed(2) || '0.00'}`
+    ]);
+    
+    autoTable(doc, {
+      head: [['Date', 'Type', 'Description', 'Amount']],
+      body: tableData,
+      startY: 66,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+    });
+    
+    doc.save('transaction_history.pdf');
+    
+    toast({
+      title: "Export Complete",
+      description: "PDF exported successfully",
     });
   };
 
@@ -248,14 +304,24 @@ const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex items-end">
+                <div className="flex items-end gap-2">
                   <Button
                     variant="outline"
-                    onClick={exportTransactions}
-                    className="w-full"
+                    onClick={exportCSV}
+                    className="flex-1"
+                    size="sm"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
+                    <Download className="w-4 h-4 mr-1" />
+                    CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={exportPDF}
+                    className="flex-1"
+                    size="sm"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    PDF
                   </Button>
                 </div>
               </div>
