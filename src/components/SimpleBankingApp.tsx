@@ -414,7 +414,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </div>
               </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-4 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -424,6 +424,19 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">View</span>
                 <span className="sm:hidden">View</span>
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="w-full text-xs sm:text-sm"
+                onClick={() => {
+                  setQrInitialMode('scan');
+                  setShowQRScanner(true);
+                }}
+              >
+                <Send className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Send</span>
+                <span className="sm:hidden">Send</span>
               </Button>
               <Button 
                 variant="outline" 

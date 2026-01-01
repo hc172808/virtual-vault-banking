@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
+import TransactionReceiptModal from "./TransactionReceiptModal";
 import { QRCodeSVG } from 'qrcode.react';
 import jsQR from 'jsqr';
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,8 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const [feeInfo, setFeeInfo] = useState({ percentage: 0, fixed: 0, total: 0 });
   const [isScanning, setIsScanning] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [completedTransaction, setCompletedTransaction] = useState<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -357,9 +360,30 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
         throw new Error(result.error || 'Transaction failed');
       }
 
+      // Create notification for recipient
+      await supabase.from('activity_logs').insert({
+        user_id: transaction.recipient.id,
+        action_type: 'PAYMENT_RECEIVED',
+        description: `You received $${transaction.amount.toFixed(2)} from ${userProfile?.full_name}`,
+      });
+
       toast({
         title: "Transaction Successful",
-        description: `Sent $${transaction.amount.toFixed(2)} to ${transaction.recipient.name} (Fee: $${totalFee.toFixed(2)})`,
+        description: `Sent $${transaction.amount.toFixed(2)} to ${transaction.recipient.name}`,
+      });
+
+      // Set completed transaction for receipt
+      setCompletedTransaction({
+        id: result.transaction_id,
+        amount: transaction.amount,
+        fee: totalFee,
+        total: transaction.amount + totalFee,
+        recipientName: transaction.recipient.name,
+        recipientId: transaction.recipient.id,
+        senderName: userProfile?.full_name || 'You',
+        senderId: userId,
+        timestamp: new Date(),
+        description: `QR Transfer to ${transaction.recipient.name}`,
       });
 
       // Reset form
@@ -371,8 +395,8 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
       // Notify parent component
       onTransactionComplete?.();
       
-      // Close modal
-      onOpenChange(false);
+      // Show receipt modal
+      setShowReceipt(true);
     } catch (error: any) {
       console.error('Transaction error:', error);
       toast({
@@ -604,6 +628,18 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
         isLoading={isLoading}
         title="Confirm Transaction"
         description="Enter your PIN to confirm this transaction"
+      />
+
+      {/* Transaction Receipt Modal */}
+      <TransactionReceiptModal
+        open={showReceipt}
+        onOpenChange={(open) => {
+          setShowReceipt(open);
+          if (!open) {
+            onOpenChange(false);
+          }
+        }}
+        transaction={completedTransaction}
       />
     </>
   );
