@@ -20,7 +20,8 @@ import {
   LogOut,
   User as UserIcon,
   QrCode,
-  History
+  History,
+  ArrowDownLeft
 } from "lucide-react";
 import CardViewModal from "./CardViewModal";
 import PinSettingsModal from "./PinSettingsModal";  
@@ -49,6 +50,7 @@ import LiveChatModal from "./LiveChatModal";
 import FAQManagementModal from "./admin/FAQManagementModal";
 import APIKeysModal from "./admin/APIKeysModal";
 import WalletManagementModal from "./WalletManagementModal";
+import RequestFundsModal from "./RequestFundsModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -88,6 +90,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showFAQManagement, setShowFAQManagement] = useState(false);
   const [showAPIKeys, setShowAPIKeys] = useState(false);
   const [showWalletManagement, setShowWalletManagement] = useState(false);
+  const [showRequestFunds, setShowRequestFunds] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -414,7 +417,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </div>
               </div>
 
-                <div className="mt-4 grid grid-cols-4 gap-2">
+                <div className="mt-4 grid grid-cols-5 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -447,6 +450,16 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 <QrCode className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Receive</span>
                 <span className="sm:hidden">Receive</span>
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-full text-xs sm:text-sm"
+                onClick={() => setShowRequestFunds(true)}
+              >
+                <ArrowDownLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Request</span>
+                <span className="sm:hidden">Request</span>
               </Button>
                   <Button 
                     variant="outline" 
@@ -706,6 +719,15 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         open={showWalletManagement}
         onOpenChange={setShowWalletManagement}
         userId={user?.id || ''}
+      />
+
+      {/* Request Funds Modal */}
+      <RequestFundsModal
+        open={showRequestFunds}
+        onOpenChange={setShowRequestFunds}
+        userId={user?.id || ''}
+        userProfile={profile}
+        onRequestSent={loadProfile}
       />
     </div>
   );
