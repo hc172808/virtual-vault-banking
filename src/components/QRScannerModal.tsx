@@ -333,6 +333,15 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
   };
 
+  const handleBiometricVerification = async () => {
+    if (!pendingTransaction) return;
+    
+    // Biometric verified, process transaction
+    await processTransaction(pendingTransaction);
+    setShowPinVerification(false);
+    setPendingTransaction(null);
+  };
+
   const processTransaction = async (transaction: any) => {
     setIsLoading(true);
     try {
@@ -620,14 +629,16 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* PIN Verification Modal */}
+      {/* PIN Verification Modal with Biometric Support */}
       <PinVerificationModal
         open={showPinVerification}
         onOpenChange={setShowPinVerification}
         onVerify={handlePinVerification}
         isLoading={isLoading}
         title="Confirm Transaction"
-        description="Enter your PIN to confirm this transaction"
+        description="Verify your identity to confirm this transaction"
+        enableBiometric={true}
+        onBiometricVerify={handleBiometricVerification}
       />
 
       {/* Transaction Receipt Modal */}
