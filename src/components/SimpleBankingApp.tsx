@@ -50,6 +50,7 @@ import LiveChatModal from "./LiveChatModal";
 import FAQManagementModal from "./admin/FAQManagementModal";
 import APIKeysModal from "./admin/APIKeysModal";
 import WalletManagementModal from "./WalletManagementModal";
+import WalletSecurityModal from "./WalletSecurityModal";
 import RequestFundsModal from "./RequestFundsModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -90,6 +91,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showFAQManagement, setShowFAQManagement] = useState(false);
   const [showAPIKeys, setShowAPIKeys] = useState(false);
   const [showWalletManagement, setShowWalletManagement] = useState(false);
+  const [showWalletSecurity, setShowWalletSecurity] = useState(false);
   const [showRequestFunds, setShowRequestFunds] = useState(false);
 
   useEffect(() => {
@@ -225,6 +227,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'wallet':
         setShowWalletManagement(true);
+        break;
+      case 'wallet-security':
+        setShowWalletSecurity(true);
         break;
       case 'faq-manage':
         setShowFAQManagement(true);
@@ -718,6 +723,13 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <WalletManagementModal
         open={showWalletManagement}
         onOpenChange={setShowWalletManagement}
+        userId={user?.id || ''}
+      />
+
+      {/* Wallet Security Modal */}
+      <WalletSecurityModal
+        open={showWalletSecurity}
+        onOpenChange={setShowWalletSecurity}
         userId={user?.id || ''}
       />
 

@@ -124,27 +124,33 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   }, [stopCamera, userId, toast]);
 
   const scanQRCode = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current || !isScanning) return;
+    if (!videoRef.current || !canvasRef.current) return;
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
+    // Check if video is ready and has valid dimensions
     if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'dontInvert',
-    });
-    
-    if (code && code.data) {
-      processScannedCode(code.data);
+    try {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+      
+      if (code && code.data) {
+        processScannedCode(code.data);
+      }
+    } catch (error) {
+      console.error("QR scan error:", error);
     }
-  }, [isScanning, processScannedCode]);
+  }, [processScannedCode]);
 
   // Reset mode when opening
   useEffect(() => {
@@ -190,22 +196,39 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
   const startCamera = async () => {
     try {
+      // Request camera with environment facing mode (back camera on mobile)
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsScanning(true);
         
-        // Start scanning interval
-        scanIntervalRef.current = setInterval(() => {
-          scanQRCode();
-        }, 250); // Scan every 250ms
+        // Wait for video to be ready before starting scan
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          setIsScanning(true);
+          
+          // Start scanning interval after video is ready
+          if (scanIntervalRef.current) {
+            clearInterval(scanIntervalRef.current);
+          }
+          scanIntervalRef.current = setInterval(() => {
+            scanQRCode();
+          }, 200); // Scan every 200ms for better responsiveness
+        };
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Camera error:", error);
       toast({
         title: "Camera Error",
-        description: "Could not access camera. Please enter code manually.",
+        description: error.name === "NotAllowedError" 
+          ? "Camera access denied. Please allow camera access in your browser settings."
+          : "Could not access camera. Please enter code manually.",
         variant: "destructive",
       });
       setMode('manual');

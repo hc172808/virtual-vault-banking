@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, RefreshCw } from "lucide-react";
+import { CalendarIcon, KeyRound } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { generateWalletKeyPair, encryptPrivateKey } from "@/lib/wallet";
+import PasswordRecoveryModal from "./PasswordRecoveryModal";
 
 const AuthForm = () => {
+  const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -453,6 +455,18 @@ const AuthForm = () => {
             {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
           </Button>
           
+          {isLogin && (
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => setShowPasswordRecovery(true)}
+            >
+              <KeyRound className="w-4 h-4 mr-2" />
+              Forgot Password?
+            </Button>
+          )}
+          
           <Button
             type="button"
             variant="ghost"
@@ -464,6 +478,11 @@ const AuthForm = () => {
               : "Already have an account? Sign In"}
           </Button>
         </form>
+        
+        <PasswordRecoveryModal
+          open={showPasswordRecovery}
+          onOpenChange={setShowPasswordRecovery}
+        />
       </CardContent>
     </Card>
   );
