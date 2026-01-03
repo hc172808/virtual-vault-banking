@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import AccountSettings from "./pages/AccountSettings";
 import ManageProfile from "./pages/ManageProfile";
 import MobileLanding from "./pages/MobileLanding";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/mobile" element={<MobileLanding />} />
           <Route path="/settings" element={<AccountSettings />} />
           <Route path="/profile" element={<ManageProfile />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

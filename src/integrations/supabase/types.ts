@@ -347,6 +347,7 @@ export type Database = {
           tin_number: string | null
           user_id: string
           wallet_address: string | null
+          wallet_pin_hash: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -379,6 +380,7 @@ export type Database = {
           tin_number?: string | null
           user_id: string
           wallet_address?: string | null
+          wallet_pin_hash?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -411,6 +413,7 @@ export type Database = {
           tin_number?: string | null
           user_id?: string
           wallet_address?: string | null
+          wallet_pin_hash?: string | null
         }
         Relationships: []
       }
