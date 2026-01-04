@@ -23,7 +23,6 @@ interface TransactionModalProps {
   userProfile: {
     balance: number;
     pin_enabled?: boolean;
-    pin_hash?: string;
   } | null;
   userId: string;
   onTransactionComplete?: () => void;
@@ -84,8 +83,8 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       description,
     });
 
-    // Check if PIN is required
-    if (userProfile?.pin_enabled && userProfile?.pin_hash) {
+    // Check if PIN is required (server will verify if PIN is set)
+    if (userProfile?.pin_enabled) {
       setShowPinVerification(true);
     } else {
       // Process transaction without PIN
@@ -103,31 +102,38 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
 
     setIsLoading(true);
     try {
-      // Verify PIN
-      const encoder = new TextEncoder();
-      const data = encoder.encode(pin + userId);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashedPin = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      // Verify PIN server-side with rate limiting
+      const { data: pinResult, error: pinError } = await supabase.rpc('verify_transaction_pin', {
+        p_pin: pin
+      });
 
-      if (hashedPin !== userProfile?.pin_hash) {
+      if (pinError) throw pinError;
+
+      const result = pinResult as { success: boolean; error?: string; attempts_remaining?: number; locked_until?: string };
+
+      if (!result.success) {
+        const errorMessage = result.attempts_remaining !== undefined
+          ? `${result.error} (${result.attempts_remaining} attempts remaining)`
+          : result.error || 'Invalid PIN';
+        
         toast({
-          title: "Invalid PIN",
-          description: "The PIN you entered is incorrect",
+          title: "PIN Verification Failed",
+          description: errorMessage,
           variant: "destructive",
         });
         setIsLoading(false);
         return;
       }
 
-      // PIN verified, process transaction
+      // PIN verified server-side, process transaction
       await processTransaction(pendingTransaction);
       setShowPinVerification(false);
       setPendingTransaction(null);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('PIN verification error:', error);
       toast({
         title: "Error",
-        description: "PIN verification failed",
+        description: error?.message || "PIN verification failed",
         variant: "destructive",
       });
     } finally {

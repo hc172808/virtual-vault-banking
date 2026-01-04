@@ -187,12 +187,23 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
 
     setLoading(true);
     try {
-      const pinHash = await hashPin(currentPin);
-      
-      if (pinHash !== walletData?.wallet_pin_hash) {
+      // Verify wallet PIN server-side with rate limiting
+      const { data: pinResult, error: pinError } = await supabase.rpc('verify_wallet_pin', {
+        p_pin: currentPin
+      });
+
+      if (pinError) throw pinError;
+
+      const result = pinResult as { success: boolean; error?: string; attempts_remaining?: number; locked_until?: string };
+
+      if (!result.success) {
+        const errorMessage = result.attempts_remaining !== undefined
+          ? `${result.error} (${result.attempts_remaining} attempts remaining)`
+          : result.error || 'Incorrect PIN';
+        
         toast({
           title: "Incorrect PIN",
-          description: "The PIN you entered is incorrect",
+          description: errorMessage,
           variant: "destructive",
         });
         setLoading(false);
@@ -206,11 +217,11 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
         title: "Wallet Unlocked",
         description: "You can now view and manage your wallet",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error unlocking wallet:", error);
       toast({
         title: "Error",
-        description: "Failed to unlock wallet",
+        description: error?.message || "Failed to unlock wallet",
         variant: "destructive",
       });
     } finally {
@@ -230,18 +241,30 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
 
     setLoading(true);
     try {
-      const currentPinHash = await hashPin(currentPin);
-      
-      if (currentPinHash !== walletData?.wallet_pin_hash) {
+      // Verify current PIN server-side first
+      const { data: pinResult, error: pinError } = await supabase.rpc('verify_wallet_pin', {
+        p_pin: currentPin
+      });
+
+      if (pinError) throw pinError;
+
+      const result = pinResult as { success: boolean; error?: string; attempts_remaining?: number };
+
+      if (!result.success) {
+        const errorMessage = result.attempts_remaining !== undefined
+          ? `${result.error} (${result.attempts_remaining} attempts remaining)`
+          : result.error || 'Incorrect current PIN';
+        
         toast({
           title: "Incorrect Current PIN",
-          description: "The current PIN you entered is incorrect",
+          description: errorMessage,
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
+      // Current PIN verified, now set the new PIN
       const newPinHash = await hashPin(newPin);
       
       const { error } = await supabase
@@ -260,11 +283,11 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
       });
       
       await loadWalletData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error changing PIN:", error);
       toast({
         title: "Error",
-        description: "Failed to change wallet PIN",
+        description: error?.message || "Failed to change wallet PIN",
         variant: "destructive",
       });
     } finally {
