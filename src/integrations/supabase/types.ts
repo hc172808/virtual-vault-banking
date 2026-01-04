@@ -82,6 +82,8 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          encrypted_key_value: string | null
+          encryption_iv: string | null
           id: string
           is_active: boolean | null
           key_name: string
@@ -93,6 +95,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          encrypted_key_value?: string | null
+          encryption_iv?: string | null
           id?: string
           is_active?: boolean | null
           key_name: string
@@ -104,6 +108,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          encrypted_key_value?: string | null
+          encryption_iv?: string | null
           id?: string
           is_active?: boolean | null
           key_name?: string
@@ -438,6 +444,36 @@ export type Database = {
         }
         Relationships: []
       }
+      security_rate_limits: {
+        Row: {
+          action_type: string
+          attempt_count: number
+          first_attempt_at: string
+          id: string
+          last_attempt_at: string
+          locked_until: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          attempt_count?: number
+          first_attempt_at?: string
+          id?: string
+          last_attempt_at?: string
+          locked_until?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          attempt_count?: number
+          first_attempt_at?: string
+          id?: string
+          last_attempt_at?: string
+          locked_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_ticket_attachments: {
         Row: {
           content_type: string
@@ -682,6 +718,17 @@ export type Database = {
         }
         Returns: Json
       }
+      process_transfer_secure: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_pin?: string
+          p_recipient_id: string
+        }
+        Returns: Json
+      }
+      verify_transaction_pin: { Args: { p_pin: string }; Returns: Json }
+      verify_wallet_pin: { Args: { p_pin: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "agent" | "client"
