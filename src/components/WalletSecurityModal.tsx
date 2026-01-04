@@ -81,16 +81,30 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
   const loadWalletData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Get public wallet info from profiles
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("wallet_address, public_key, encrypted_private_key, wallet_pin_hash")
+        .select("wallet_address, public_key")
         .eq("user_id", userId)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      setWalletData(data);
-      setHasWalletPin(!!data?.wallet_pin_hash);
+      // Get sensitive wallet credentials from vault
+      const { data: vaultData } = await supabase
+        .from("wallet_vault")
+        .select("encrypted_private_key, wallet_pin_hash")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      // Combine data for wallet operations
+      setWalletData({
+        wallet_address: profileData?.wallet_address,
+        public_key: profileData?.public_key,
+        encrypted_private_key: vaultData?.encrypted_private_key,
+        wallet_pin_hash: vaultData?.wallet_pin_hash,
+      });
+      setHasWalletPin(!!vaultData?.wallet_pin_hash);
     } catch (error) {
       console.error("Error loading wallet data:", error);
     } finally {
@@ -129,10 +143,13 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
     try {
       const pinHash = await hashPin(walletPin);
       
+      // Upsert to wallet_vault table
       const { error } = await supabase
-        .from("profiles")
-        .update({ wallet_pin_hash: pinHash })
-        .eq("user_id", userId);
+        .from("wallet_vault")
+        .upsert({ 
+          user_id: userId,
+          wallet_pin_hash: pinHash 
+        }, { onConflict: 'user_id' });
 
       if (error) throw error;
 
@@ -228,7 +245,7 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
       const newPinHash = await hashPin(newPin);
       
       const { error } = await supabase
-        .from("profiles")
+        .from("wallet_vault")
         .update({ wallet_pin_hash: newPinHash })
         .eq("user_id", userId);
 
@@ -379,17 +396,26 @@ const WalletSecurityModal: React.FC<WalletSecurityModalProps> = ({
         throw new Error("Incorrect export password");
       }
 
-      // Update wallet in database
-      const { error } = await supabase
+      // Update public wallet info in profiles
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
           wallet_address: importData.walletAddress,
           public_key: importData.publicKey,
-          encrypted_private_key: importData.encryptedPrivateKey,
         })
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update sensitive wallet data in vault
+      const { error: vaultError } = await supabase
+        .from("wallet_vault")
+        .upsert({
+          user_id: userId,
+          encrypted_private_key: importData.encryptedPrivateKey,
+        }, { onConflict: 'user_id' });
+
+      if (vaultError) throw vaultError;
 
       setImportFile(null);
       setImportPassword("");

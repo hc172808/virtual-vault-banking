@@ -83,17 +83,26 @@ const WalletManagementModal: React.FC<WalletManagementModalProps> = ({
   const loadWalletData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Get public wallet info from profiles
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("wallet_address, public_key, encrypted_private_key")
+        .select("wallet_address, public_key")
         .eq("user_id", userId)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      setWalletAddress(data?.wallet_address || "");
-      setPublicKey(data?.public_key || "");
-      setEncryptedPrivateKey(data?.encrypted_private_key || "");
+      setWalletAddress(profileData?.wallet_address || "");
+      setPublicKey(profileData?.public_key || "");
+
+      // Get sensitive wallet credentials from vault
+      const { data: vaultData } = await supabase
+        .from("wallet_vault")
+        .select("encrypted_private_key")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      setEncryptedPrivateKey(vaultData?.encrypted_private_key || "");
     } catch (error) {
       console.error("Error loading wallet data:", error);
     } finally {
