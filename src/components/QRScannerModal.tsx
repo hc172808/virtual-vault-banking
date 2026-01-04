@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
 import TransactionReceiptModal from "./TransactionReceiptModal";
-import { QRCodeSVG } from 'qrcode.react';
 import jsQR from 'jsqr';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,8 +56,6 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Generate user's QR code data
-  const userQRData = `STABLECOIN:${userId}:${userProfile?.full_name}`;
 
   const stopCamera = useCallback(() => {
     // Stop scanning interval
@@ -628,26 +625,6 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
               </>
             )}
 
-            {/* Show user's own QR code */}
-            <div className="border-t pt-4">
-              <Label className="text-sm font-medium">Your QR Code</Label>
-              <div className="mt-2 p-4 bg-muted rounded-lg text-center">
-                <div className="w-48 h-48 mx-auto bg-white p-4 rounded-lg mb-2">
-                  <QRCodeSVG 
-                    value={userQRData} 
-                    size={176}
-                    level="H"
-                    includeMargin={false}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  <strong>{userProfile?.full_name}</strong>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Show this QR code to receive money
-                </p>
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

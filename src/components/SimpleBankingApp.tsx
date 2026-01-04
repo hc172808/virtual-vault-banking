@@ -123,11 +123,36 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         )
         .subscribe();
 
+      // Auto-refresh balance every 3 seconds
+      const refreshInterval = setInterval(() => {
+        refreshBalance();
+      }, 3000);
+
       return () => {
         supabase.removeChannel(channel);
+        clearInterval(refreshInterval);
       };
     }
   }, [user]);
+
+  const refreshBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        setProfile((prev: any) => ({
+          ...prev,
+          balance: data.balance,
+        }));
+      }
+    } catch (error) {
+      console.error('Error refreshing balance:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
