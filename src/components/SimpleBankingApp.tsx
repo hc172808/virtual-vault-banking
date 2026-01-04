@@ -447,66 +447,6 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </div>
               </div>
 
-                <div className="mt-4 grid grid-cols-5 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCardView(true)}
-                className="w-full text-xs sm:text-sm"
-              >
-                <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">View</span>
-                <span className="sm:hidden">View</span>
-              </Button>
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="w-full text-xs sm:text-sm"
-                onClick={() => {
-                  setQrInitialMode('scan');
-                  setShowQRScanner(true);
-                }}
-              >
-                <Send className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Send</span>
-                <span className="sm:hidden">Send</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-xs sm:text-sm"
-                onClick={() => setShowReceiveFunds(true)}
-              >
-                <QrCode className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Receive</span>
-                <span className="sm:hidden">Receive</span>
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="w-full text-xs sm:text-sm"
-                onClick={() => setShowRequestFunds(true)}
-              >
-                <ArrowDownLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Request</span>
-                <span className="sm:hidden">Request</span>
-              </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-xs sm:text-sm"
-                    onClick={() => {
-                      setCardLocked(!cardLocked);
-                      toast({
-                        title: cardLocked ? "Card Unlocked" : "Card Locked",
-                        description: `Your card has been ${cardLocked ? 'unlocked' : 'locked'} successfully`,
-                      });
-                    }}
-                  >
-                    <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    {cardLocked ? 'Unlock' : 'Lock'}
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -766,6 +706,68 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         userProfile={profile}
         onRequestSent={loadProfile}
       />
+
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg z-50 pb-safe">
+        <div className="max-w-lg mx-auto px-4 py-3">
+          <div className="grid grid-cols-5 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCardView(true)}
+              className="flex flex-col items-center justify-center h-14 gap-1 p-1"
+            >
+              <Eye className="w-5 h-5" />
+              <span className="text-[10px]">View</span>
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex flex-col items-center justify-center h-14 gap-1 p-1"
+              onClick={() => {
+                setQrInitialMode('scan');
+                setShowQRScanner(true);
+              }}
+            >
+              <Send className="w-5 h-5" />
+              <span className="text-[10px]">Send</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex flex-col items-center justify-center h-14 gap-1 p-1"
+              onClick={() => setShowReceiveFunds(true)}
+            >
+              <QrCode className="w-5 h-5" />
+              <span className="text-[10px]">Receive</span>
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="flex flex-col items-center justify-center h-14 gap-1 p-1"
+              onClick={() => setShowRequestFunds(true)}
+            >
+              <ArrowDownLeft className="w-5 h-5" />
+              <span className="text-[10px]">Request</span>
+            </Button>
+            <Button 
+              variant={cardLocked ? "destructive" : "outline"}
+              size="sm" 
+              className="flex flex-col items-center justify-center h-14 gap-1 p-1"
+              onClick={() => {
+                setCardLocked(!cardLocked);
+                toast({
+                  title: cardLocked ? "Card Unlocked" : "Card Locked",
+                  description: `Your card has been ${cardLocked ? 'unlocked' : 'locked'} successfully`,
+                });
+              }}
+            >
+              <Shield className="w-5 h-5" />
+              <span className="text-[10px]">{cardLocked ? 'Unlock' : 'Lock'}</span>
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
