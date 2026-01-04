@@ -107,7 +107,7 @@ const AuthForm = () => {
           throw authError;
         }
         
-        // Update profile with additional information including wallet
+        // Update profile with additional information including public wallet info
         if (authData.user) {
           const { error: profileError } = await supabase
             .from("profiles")
@@ -130,13 +130,24 @@ const AuthForm = () => {
               tin_number: tinNumber,
               referral_code: referralCode,
               wallet_address: wallet.address,
-              wallet_public_key: wallet.publicKey,
-              encrypted_private_key: encryptedPrivateKey,
+              public_key: wallet.publicKey,
             })
             .eq("user_id", authData.user.id);
           
           if (profileError) {
             console.error("Profile update error:", profileError);
+          }
+
+          // Store sensitive wallet credentials in vault
+          const { error: vaultError } = await supabase
+            .from("wallet_vault")
+            .insert({
+              user_id: authData.user.id,
+              encrypted_private_key: encryptedPrivateKey,
+            });
+          
+          if (vaultError) {
+            console.error("Wallet vault error:", vaultError);
           }
         }
         

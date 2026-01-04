@@ -328,7 +328,6 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           email: string
-          encrypted_private_key: string | null
           full_name: string
           gender: string | null
           id: string
@@ -347,7 +346,6 @@ export type Database = {
           tin_number: string | null
           user_id: string
           wallet_address: string | null
-          wallet_pin_hash: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -361,7 +359,6 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email: string
-          encrypted_private_key?: string | null
           full_name: string
           gender?: string | null
           id?: string
@@ -380,7 +377,6 @@ export type Database = {
           tin_number?: string | null
           user_id: string
           wallet_address?: string | null
-          wallet_pin_hash?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -394,7 +390,6 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email?: string
-          encrypted_private_key?: string | null
           full_name?: string
           gender?: string | null
           id?: string
@@ -413,7 +408,6 @@ export type Database = {
           tin_number?: string | null
           user_id?: string
           wallet_address?: string | null
-          wallet_pin_hash?: string | null
         }
         Relationships: []
       }
@@ -637,6 +631,33 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_vault: {
+        Row: {
+          created_at: string
+          encrypted_private_key: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_pin_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          encrypted_private_key?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          wallet_pin_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          encrypted_private_key?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          wallet_pin_hash?: string | null
         }
         Relationships: []
       }
