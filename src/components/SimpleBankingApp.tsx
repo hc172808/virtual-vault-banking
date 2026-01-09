@@ -52,6 +52,7 @@ import APIKeysModal from "./admin/APIKeysModal";
 import WalletManagementModal from "./WalletManagementModal";
 import WalletSecurityModal from "./WalletSecurityModal";
 import RequestFundsModal from "./RequestFundsModal";
+import ThemeSelector from "./ThemeSelector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SimpleBankingAppProps {
@@ -93,6 +94,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showWalletManagement, setShowWalletManagement] = useState(false);
   const [showWalletSecurity, setShowWalletSecurity] = useState(false);
   const [showRequestFunds, setShowRequestFunds] = useState(false);
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -261,6 +263,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'api-keys':
         setShowAPIKeys(true);
+        break;
+      case 'theme':
+        setShowThemeSelector(true);
         break;
       case 'admin':
         // Show admin menu or modal
