@@ -712,6 +712,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         onRequestSent={loadProfile}
       />
 
+      {/* Theme Selector Modal */}
+      <ThemeSelector
+        open={showThemeSelector}
+        onOpenChange={setShowThemeSelector}
+      />
+
       {/* Floating Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg z-50 pb-safe">
         <div className="max-w-lg mx-auto px-4 py-3">
