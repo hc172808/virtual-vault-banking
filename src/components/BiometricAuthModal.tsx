@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Fingerprint, ScanFace, AlertTriangle, Check } from "lucide-react";
+import { useNativeBiometrics } from "@/hooks/useNativeBiometrics";
 
 interface BiometricAuthModalProps {
   open: boolean;
@@ -31,112 +32,35 @@ const BiometricAuthModal: React.FC<BiometricAuthModalProps> = ({
 }) => {
   const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState("");
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  
+  const { 
+    isAvailable: biometricAvailable, 
+    authenticate, 
+    getBiometryLabel,
+    isLoading: biometricLoading 
+  } = useNativeBiometrics();
 
   useEffect(() => {
-    checkBiometricAvailability();
-  }, []);
-
-  useEffect(() => {
-    if (open && biometricAvailable) {
+    if (open && biometricAvailable && !biometricLoading) {
       startBiometricAuth();
     }
-  }, [open, biometricAvailable]);
-
-  const checkBiometricAvailability = async () => {
-    try {
-      if (window.PublicKeyCredential) {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        setBiometricAvailable(available);
-      }
-    } catch (error) {
-      console.log('Biometric check failed:', error);
-      setBiometricAvailable(false);
-    }
-  };
+  }, [open, biometricAvailable, biometricLoading]);
 
   const startBiometricAuth = async () => {
     setStatus('scanning');
     setErrorMessage("");
 
-    try {
-      // Use Web Authentication API for biometric verification
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
+    const result = await authenticate('Verify your identity');
 
-      const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-        challenge,
-        timeout: 60000,
-        userVerification: "required",
-        rpId: window.location.hostname,
-      };
-
-      // Try to get credentials - this will trigger biometric prompt
-      const credential = await navigator.credentials.get({
-        publicKey: publicKeyCredentialRequestOptions,
-      });
-
-      if (credential) {
-        setStatus('success');
-        setTimeout(() => {
-          onVerify();
-          onOpenChange(false);
-        }, 500);
-      }
-    } catch (error: any) {
-      console.error('Biometric auth error:', error);
-      
-      // If user cancelled or biometric failed, allow retry or fallback
-      if (error.name === 'NotAllowedError') {
-        setStatus('error');
-        setErrorMessage("Authentication cancelled or not allowed");
-      } else if (error.name === 'SecurityError') {
-        // No credentials registered - simulate biometric check
-        await simulateBiometricAuth();
-      } else {
-        setStatus('error');
-        setErrorMessage(error.message || "Biometric authentication failed");
-      }
-    }
-  };
-
-  // Fallback biometric simulation using device biometrics directly
-  const simulateBiometricAuth = async () => {
-    try {
-      // Use a simple credential check that still requires biometric
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: new Uint8Array(32),
-          rp: { name: "StableCoin Banking", id: window.location.hostname },
-          user: {
-            id: new Uint8Array(16),
-            name: "user",
-            displayName: "StableCoin User",
-          },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          timeout: 60000,
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required",
-          },
-        },
-      });
-
-      if (credential) {
-        setStatus('success');
-        setTimeout(() => {
-          onVerify();
-          onOpenChange(false);
-        }, 500);
-      }
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
-        setStatus('error');
-        setErrorMessage("Authentication cancelled");
-      } else {
-        setStatus('error');
-        setErrorMessage("Biometric not available on this device");
-      }
+    if (result.verified) {
+      setStatus('success');
+      setTimeout(() => {
+        onVerify();
+        onOpenChange(false);
+      }, 500);
+    } else {
+      setStatus('error');
+      setErrorMessage(result.error || 'Authentication failed');
     }
   };
 
@@ -149,6 +73,34 @@ const BiometricAuthModal: React.FC<BiometricAuthModalProps> = ({
   const handleFallbackToPin = () => {
     handleClose();
     onFallbackToPin();
+  };
+
+  const BiometricIcon = () => {
+    const label = getBiometryLabel();
+    if (label === 'Face ID') {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <ScanFace className={`w-12 h-12 ${
+            status === 'scanning' 
+              ? 'text-primary animate-pulse' 
+              : status === 'error'
+              ? 'text-destructive'
+              : 'text-muted-foreground'
+          }`} />
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <Fingerprint className={`w-12 h-12 ${
+          status === 'scanning' 
+            ? 'text-primary animate-pulse' 
+            : status === 'error'
+            ? 'text-destructive'
+            : 'text-muted-foreground'
+        }`} />
+      </div>
+    );
   };
 
   return (
@@ -169,30 +121,15 @@ const BiometricAuthModal: React.FC<BiometricAuthModalProps> = ({
               status === 'scanning' 
                 ? 'bg-primary/10 animate-pulse' 
                 : status === 'success'
-                ? 'bg-green-100'
+                ? 'bg-green-100 dark:bg-green-900/30'
                 : status === 'error'
-                ? 'bg-red-100'
+                ? 'bg-red-100 dark:bg-red-900/30'
                 : 'bg-muted'
             }`}>
               {status === 'success' ? (
                 <Check className="w-16 h-16 text-green-600" />
               ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <Fingerprint className={`w-12 h-12 ${
-                    status === 'scanning' 
-                      ? 'text-primary animate-pulse' 
-                      : status === 'error'
-                      ? 'text-destructive'
-                      : 'text-muted-foreground'
-                  }`} />
-                  <ScanFace className={`w-8 h-8 ${
-                    status === 'scanning' 
-                      ? 'text-primary animate-pulse' 
-                      : status === 'error'
-                      ? 'text-destructive'
-                      : 'text-muted-foreground'
-                  }`} />
-                </div>
+                <BiometricIcon />
               )}
             </div>
           </div>
@@ -201,7 +138,9 @@ const BiometricAuthModal: React.FC<BiometricAuthModalProps> = ({
           <div className="text-center">
             {status === 'scanning' && (
               <p className="text-muted-foreground">
-                Place your finger on the sensor or look at the camera...
+                {getBiometryLabel() === 'Face ID' 
+                  ? 'Look at your device...' 
+                  : 'Touch the sensor...'}
               </p>
             )}
             {status === 'success' && (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PinVerificationModal from "./PinVerificationModal";
-import { Send, ArrowDownLeft, AlertTriangle, DollarSign } from "lucide-react";
+import PinSetupModal from "./PinSetupModal";
+import { Send, ArrowDownLeft, AlertTriangle, DollarSign, Lock } from "lucide-react";
 
 interface TransactionModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface TransactionModalProps {
   userProfile: {
     balance: number;
     pin_enabled?: boolean;
+    pin_hash?: string;
   } | null;
   userId: string;
   onTransactionComplete?: () => void;
@@ -44,7 +46,32 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
+  const [hasPinSet, setHasPinSet] = useState(false);
+
+  // Check if user has PIN set when modal opens
+  useEffect(() => {
+    if (open && userId) {
+      checkPinStatus();
+    }
+  }, [open, userId]);
+
+  const checkPinStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('pin_hash, pin_enabled')
+        .eq('user_id', userId)
+        .single();
+
+      if (!error && data) {
+        setHasPinSet(!!data.pin_hash);
+      }
+    } catch (error) {
+      console.error('Error checking PIN status:', error);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!amount || !recipient) {
@@ -83,18 +110,18 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       description,
     });
 
-    // Check if PIN is required (server will verify if PIN is set)
-    if (userProfile?.pin_enabled) {
-      setShowPinVerification(true);
+    // Always require PIN for transactions - prompt to create if not set
+    if (!hasPinSet) {
+      setShowPinSetup(true);
     } else {
-      // Process transaction without PIN
-      await processTransaction({
-        type: transactionType,
-        amount: transactionAmount,
-        recipient,
-        description,
-      });
+      setShowPinVerification(true);
     }
+  };
+
+  const handlePinSetComplete = () => {
+    setHasPinSet(true);
+    // After setting PIN, show verification modal
+    setShowPinVerification(true);
   };
 
   const handlePinVerification = async (pin: string) => {
@@ -139,6 +166,15 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBiometricVerification = async () => {
+    if (!pendingTransaction) return;
+    
+    // Biometric verified, process transaction
+    await processTransaction(pendingTransaction);
+    setShowPinVerification(false);
+    setPendingTransaction(null);
   };
 
   const processTransaction = async (transaction: any) => {
@@ -285,6 +321,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     setDescription("");
     setPendingTransaction(null);
     setShowPinVerification(false);
+    setShowPinSetup(false);
     onOpenChange(false);
   };
 
@@ -384,14 +421,14 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
             )}
 
             {/* PIN Notice */}
-            {userProfile?.pin_enabled && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  You'll need to enter your PIN to complete this transaction.
-                </AlertDescription>
-              </Alert>
-            )}
+            <Alert>
+              <Lock className="h-4 w-4" />
+              <AlertDescription>
+                {hasPinSet 
+                  ? "You'll need to verify your PIN or biometrics to complete this transaction."
+                  : "You'll need to create a transaction PIN to complete this transaction."}
+              </AlertDescription>
+            </Alert>
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
@@ -416,12 +453,24 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* PIN Setup Modal - for users who don't have a PIN yet */}
+      <PinSetupModal
+        open={showPinSetup}
+        onOpenChange={setShowPinSetup}
+        userId={userId}
+        onPinSet={handlePinSetComplete}
+        title="Set Up Transaction PIN"
+        description="Create a 4-digit PIN to secure your transactions"
+      />
+
       {/* PIN Verification Modal */}
       <PinVerificationModal
         open={showPinVerification}
         onOpenChange={setShowPinVerification}
         onVerify={handlePinVerification}
+        onBiometricVerify={handleBiometricVerification}
         isLoading={isLoading}
+        enableBiometric={true}
       />
     </>
   );
