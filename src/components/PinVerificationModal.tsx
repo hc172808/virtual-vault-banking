@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lock, AlertTriangle, Fingerprint, ScanFace, Check } from "lucide-react";
+import { useNativeBiometrics } from "@/hooks/useNativeBiometrics";
 
 interface PinVerificationModalProps {
   open: boolean;
@@ -34,87 +35,44 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
 }) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricStatus, setBiometricStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
   const [showPinInput, setShowPinInput] = useState(false);
+  
+  const { 
+    isAvailable: biometricAvailable, 
+    authenticate, 
+    getBiometryLabel,
+    isLoading: biometricLoading 
+  } = useNativeBiometrics();
 
   useEffect(() => {
-    if (open && enableBiometric) {
-      checkBiometricAvailability();
-    }
-  }, [open, enableBiometric]);
-
-  useEffect(() => {
-    if (open && biometricAvailable && enableBiometric && !showPinInput) {
+    if (open && enableBiometric && biometricAvailable && !showPinInput) {
       startBiometricAuth();
     }
-  }, [open, biometricAvailable, enableBiometric, showPinInput]);
+  }, [open, enableBiometric, biometricAvailable, showPinInput]);
 
-  const checkBiometricAvailability = async () => {
-    try {
-      if (window.PublicKeyCredential) {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        setBiometricAvailable(available);
-        if (!available) {
-          setShowPinInput(true);
-        }
-      } else {
-        setShowPinInput(true);
-      }
-    } catch (error) {
-      console.log('Biometric check failed:', error);
-      setBiometricAvailable(false);
+  useEffect(() => {
+    if (open && !biometricLoading && !biometricAvailable) {
       setShowPinInput(true);
     }
-  };
+  }, [open, biometricLoading, biometricAvailable]);
 
   const startBiometricAuth = async () => {
     setBiometricStatus('scanning');
 
-    try {
-      // Use Web Authentication API for biometric verification
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
+    const result = await authenticate('Verify transaction');
 
-      // Try to get or create credentials - this triggers biometric prompt
-      try {
-        const credential = await navigator.credentials.create({
-          publicKey: {
-            challenge,
-            rp: { name: "StableCoin Banking", id: window.location.hostname },
-            user: {
-              id: new Uint8Array(16),
-              name: "transaction-verify",
-              displayName: "Transaction Verification",
-            },
-            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-            timeout: 60000,
-            authenticatorSelection: {
-              authenticatorAttachment: "platform",
-              userVerification: "required",
-            },
-          },
-        });
-
-        if (credential) {
-          setBiometricStatus('success');
-          setTimeout(() => {
-            if (onBiometricVerify) {
-              onBiometricVerify();
-            }
-            handleClose();
-          }, 500);
+    if (result.verified) {
+      setBiometricStatus('success');
+      setTimeout(() => {
+        if (onBiometricVerify) {
+          onBiometricVerify();
         }
-      } catch (credError: any) {
-        if (credError.name === 'NotAllowedError') {
-          setBiometricStatus('error');
-        } else {
-          throw credError;
-        }
-      }
-    } catch (error: any) {
-      console.error('Biometric auth error:', error);
+        handleClose();
+      }, 500);
+    } else {
       setBiometricStatus('error');
+      setError(result.error || 'Authentication failed');
     }
   };
 
@@ -138,7 +96,28 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
 
   const switchToPinInput = () => {
     setBiometricStatus('idle');
+    setError("");
     setShowPinInput(true);
+  };
+
+  const BiometricIcon = () => {
+    const label = getBiometryLabel();
+    if (label === 'Face ID') {
+      return <ScanFace className={`w-10 h-10 ${
+        biometricStatus === 'scanning' 
+          ? 'text-primary animate-pulse' 
+          : biometricStatus === 'error'
+          ? 'text-destructive'
+          : 'text-muted-foreground'
+      }`} />;
+    }
+    return <Fingerprint className={`w-10 h-10 ${
+      biometricStatus === 'scanning' 
+        ? 'text-primary animate-pulse' 
+        : biometricStatus === 'error'
+        ? 'text-destructive'
+        : 'text-muted-foreground'
+    }`} />;
   };
 
   return (
@@ -151,10 +130,10 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
             ) : (
               <Fingerprint className="w-5 h-5 mr-2" />
             )}
-            {showPinInput ? title : "Biometric Authentication"}
+            {showPinInput ? title : `${getBiometryLabel()} Authentication`}
           </DialogTitle>
           <DialogDescription>
-            {showPinInput ? description : "Use fingerprint or face to verify"}
+            {showPinInput ? description : `Use ${getBiometryLabel().toLowerCase()} to verify`}
           </DialogDescription>
         </DialogHeader>
 
@@ -168,30 +147,15 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                   biometricStatus === 'scanning' 
                     ? 'bg-primary/10 animate-pulse' 
                     : biometricStatus === 'success'
-                    ? 'bg-green-100'
+                    ? 'bg-green-100 dark:bg-green-900/30'
                     : biometricStatus === 'error'
-                    ? 'bg-red-100'
+                    ? 'bg-red-100 dark:bg-red-900/30'
                     : 'bg-muted'
                 }`}>
                   {biometricStatus === 'success' ? (
                     <Check className="w-12 h-12 text-green-600" />
                   ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <Fingerprint className={`w-10 h-10 ${
-                        biometricStatus === 'scanning' 
-                          ? 'text-primary animate-pulse' 
-                          : biometricStatus === 'error'
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
-                      }`} />
-                      <ScanFace className={`w-6 h-6 ${
-                        biometricStatus === 'scanning' 
-                          ? 'text-primary animate-pulse' 
-                          : biometricStatus === 'error'
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
-                      }`} />
-                    </div>
+                    <BiometricIcon />
                   )}
                 </div>
               </div>
@@ -200,7 +164,9 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
               <div className="text-center">
                 {biometricStatus === 'scanning' && (
                   <p className="text-sm text-muted-foreground">
-                    Touch sensor or look at camera...
+                    {getBiometryLabel() === 'Face ID' 
+                      ? 'Look at your device...' 
+                      : 'Touch the sensor...'}
                   </p>
                 )}
                 {biometricStatus === 'success' && (
@@ -208,9 +174,9 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                     Verified!
                   </p>
                 )}
-                {biometricStatus === 'error' && (
+                {biometricStatus === 'error' && error && (
                   <p className="text-sm text-destructive">
-                    Authentication cancelled or failed
+                    {error}
                   </p>
                 )}
               </div>
@@ -245,7 +211,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
           {/* PIN Input Mode */}
           {(showPinInput || !biometricAvailable) && (
             <>
-              <div className="flex justify-center">
+              <div className="flex justify-center py-4">
                 <InputOTP
                   maxLength={4}
                   value={pin}
@@ -294,13 +260,14 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                   variant="ghost"
                   onClick={() => {
                     setShowPinInput(false);
+                    setError("");
                     startBiometricAuth();
                   }}
                   disabled={isLoading}
                   className="w-full"
                 >
                   <Fingerprint className="w-4 h-4 mr-2" />
-                  Use Biometric Instead
+                  Use {getBiometryLabel()} Instead
                 </Button>
               )}
 

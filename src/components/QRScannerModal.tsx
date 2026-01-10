@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { QrCode, Camera, Send, DollarSign, User } from "lucide-react";
+import { QrCode, Camera, Send, DollarSign, User, Lock } from "lucide-react";
 import PinVerificationModal from "./PinVerificationModal";
+import PinSetupModal from "./PinSetupModal";
 import TransactionReceiptModal from "./TransactionReceiptModal";
 import jsQR from 'jsqr';
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ interface QRScannerModalProps {
   userProfile: {
     balance: number;
     pin_enabled?: boolean;
+    pin_hash?: string;
     full_name: string;
   } | null;
   userId: string;
@@ -46,11 +48,13 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [recipientInfo, setRecipientInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const [feeInfo, setFeeInfo] = useState({ percentage: 0, fixed: 0, total: 0 });
   const [isScanning, setIsScanning] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<any>(null);
+  const [hasPinSet, setHasPinSet] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,10 +152,29 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
   }, [processScannedCode]);
 
-  // Reset mode when opening
+  // Reset mode when opening and check PIN status
   useEffect(() => {
-    if (open) setMode(initialMode);
+    if (open) {
+      setMode(initialMode);
+      checkPinStatus();
+    }
   }, [open, initialMode]);
+
+  const checkPinStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('pin_hash, pin_enabled')
+        .eq('user_id', userId)
+        .single();
+
+      if (!error && data) {
+        setHasPinSet(!!data.pin_hash);
+      }
+    } catch (error) {
+      console.error('Error checking PIN status:', error);
+    }
+  };
   
   useEffect(() => {
     if (open && mode === 'scan') {
@@ -304,15 +327,18 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
       recipient: recipientInfo,
     });
 
-    // Check if PIN is required (server will verify if PIN is set)
-    if (userProfile?.pin_enabled) {
-      setShowPinVerification(true);
+    // Always require PIN for transactions - prompt to create if not set
+    if (!hasPinSet) {
+      setShowPinSetup(true);
     } else {
-      processTransaction({
-        amount: transactionAmount,
-        recipient: recipientInfo,
-      });
+      setShowPinVerification(true);
     }
+  };
+
+  const handlePinSetComplete = () => {
+    setHasPinSet(true);
+    // After setting PIN, show verification modal
+    setShowPinVerification(true);
   };
 
   const handlePinVerification = async (pin: string) => {
@@ -599,13 +625,14 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
                   </AlertDescription>
                 </Alert>
 
-                {userProfile?.pin_enabled && (
-                  <Alert>
-                    <AlertDescription>
-                      You'll need to enter your PIN to complete this transaction.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <Alert>
+                  <Lock className="h-4 w-4" />
+                  <AlertDescription>
+                    {hasPinSet 
+                      ? "You'll need to verify your PIN or biometrics to complete this transaction."
+                      : "You'll need to create a transaction PIN to complete this transaction."}
+                  </AlertDescription>
+                </Alert>
 
                 <div className="flex gap-2">
                   <Button
@@ -634,6 +661,16 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* PIN Setup Modal - for users who don't have a PIN yet */}
+      <PinSetupModal
+        open={showPinSetup}
+        onOpenChange={setShowPinSetup}
+        userId={userId}
+        onPinSet={handlePinSetComplete}
+        title="Set Up Transaction PIN"
+        description="Create a 4-digit PIN to secure your transactions"
+      />
 
       {/* PIN Verification Modal with Biometric Support */}
       <PinVerificationModal
