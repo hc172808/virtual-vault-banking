@@ -119,6 +119,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_treasury: {
+        Row: {
+          balance: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           agent_id: string | null
@@ -210,6 +240,63 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      fund_chain_tracking: {
+        Row: {
+          amount: number
+          chain_id: string
+          created_at: string
+          destination_user_id: string
+          fund_log_id: string | null
+          id: string
+          is_verified: boolean
+          parent_chain_id: string | null
+          source_type: string
+          source_user_id: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          chain_id: string
+          created_at?: string
+          destination_user_id: string
+          fund_log_id?: string | null
+          id?: string
+          is_verified?: boolean
+          parent_chain_id?: string | null
+          source_type: string
+          source_user_id?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          chain_id?: string
+          created_at?: string
+          destination_user_id?: string
+          fund_log_id?: string | null
+          id?: string
+          is_verified?: boolean
+          parent_chain_id?: string | null
+          source_type?: string
+          source_user_id?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_fund_log"
+            columns: ["fund_log_id"]
+            isOneToOne: false
+            referencedRelation: "fund_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_transaction"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fund_logs: {
         Row: {
@@ -649,6 +736,44 @@ export type Database = {
         }
         Relationships: []
       }
+      treasury_withdrawals: {
+        Row: {
+          admin_id: string
+          amount: number
+          chain_id: string
+          created_at: string
+          id: string
+          reason: string
+          treasury_id: string
+        }
+        Insert: {
+          admin_id: string
+          amount: number
+          chain_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          treasury_id: string
+        }
+        Update: {
+          admin_id?: string
+          amount?: number
+          chain_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          treasury_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_withdrawals_treasury_id_fkey"
+            columns: ["treasury_id"]
+            isOneToOne: false
+            referencedRelation: "bank_treasury"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -702,6 +827,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_transfer_with_chain: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_parent_chain_id?: string
+          p_recipient_id: string
+        }
+        Returns: Json
+      }
+      generate_chain_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -727,8 +862,13 @@ export type Database = {
         }
         Returns: Json
       }
+      verify_fund_chain: { Args: { p_chain_id: string }; Returns: Json }
       verify_transaction_pin: { Args: { p_pin: string }; Returns: Json }
       verify_wallet_pin: { Args: { p_pin: string }; Returns: Json }
+      withdraw_from_treasury: {
+        Args: { p_amount: number; p_reason: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "agent" | "client"
