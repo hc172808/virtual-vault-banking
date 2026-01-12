@@ -53,7 +53,13 @@ import WalletManagementModal from "./WalletManagementModal";
 import WalletSecurityModal from "./WalletSecurityModal";
 import RequestFundsModal from "./RequestFundsModal";
 import ThemeSelector from "./ThemeSelector";
+import { TreasuryManagementModal } from "./admin/TreasuryManagementModal";
+import { AdminTransferModal } from "./admin/AdminTransferModal";
+import { CreateUserModal } from "./admin/CreateUserModal";
+import { TransactionLimitsModal } from "./admin/TransactionLimitsModal";
+import { HighValueVerificationModal } from "./HighValueVerificationModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Building2, Gauge, UserPlus, SendHorizontal } from "lucide-react";
 
 interface SimpleBankingAppProps {
   user: any;
@@ -95,6 +101,12 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showWalletSecurity, setShowWalletSecurity] = useState(false);
   const [showRequestFunds, setShowRequestFunds] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  
+  // New Admin modals
+  const [showTreasuryManagement, setShowTreasuryManagement] = useState(false);
+  const [showAdminTransfer, setShowAdminTransfer] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [showTransactionLimits, setShowTransactionLimits] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -467,7 +479,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <Button 
                   variant="outline" 
                   className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
@@ -479,10 +491,42 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 <Button 
                   variant="outline" 
                   className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowCreateUser(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Create User
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowFundManagement(true)}
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
                   Fund Management
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowTreasuryManagement(true)}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Bank Treasury
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowAdminTransfer(true)}
+                >
+                  <SendHorizontal className="w-4 h-4 mr-2" />
+                  Admin Transfer
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowTransactionLimits(true)}
+                >
+                  <Gauge className="w-4 h-4 mr-2" />
+                  Transaction Limits
                 </Button>
                 <Button 
                   variant="outline" 
@@ -502,7 +546,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm col-span-2 sm:col-span-1"
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
                   onClick={() => setShowAnnouncements(true)}
                 >
                   <Bell className="w-4 h-4 mr-2" />
@@ -574,6 +618,25 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <AnnouncementsModal 
         open={showAnnouncements} 
         onOpenChange={setShowAnnouncements} 
+      />
+      <TreasuryManagementModal
+        open={showTreasuryManagement}
+        onOpenChange={setShowTreasuryManagement}
+        currentUser={user}
+      />
+      <AdminTransferModal
+        open={showAdminTransfer}
+        onOpenChange={setShowAdminTransfer}
+        currentUser={user}
+      />
+      <CreateUserModal
+        open={showCreateUser}
+        onOpenChange={setShowCreateUser}
+        onUserCreated={loadProfile}
+      />
+      <TransactionLimitsModal
+        open={showTransactionLimits}
+        onOpenChange={setShowTransactionLimits}
       />
 
       {/* User Modals */}
