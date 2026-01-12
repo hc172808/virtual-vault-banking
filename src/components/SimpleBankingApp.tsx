@@ -58,8 +58,9 @@ import { AdminTransferModal } from "./admin/AdminTransferModal";
 import { CreateUserModal } from "./admin/CreateUserModal";
 import { TransactionLimitsModal } from "./admin/TransactionLimitsModal";
 import { HighValueVerificationModal } from "./HighValueVerificationModal";
+import { DeploymentManagementModal } from "./admin/DeploymentManagementModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, Gauge, UserPlus, SendHorizontal } from "lucide-react";
+import { Building2, Gauge, UserPlus, SendHorizontal, Server } from "lucide-react";
 
 interface SimpleBankingAppProps {
   user: any;
@@ -107,6 +108,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
   const [showAdminTransfer, setShowAdminTransfer] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showTransactionLimits, setShowTransactionLimits] = useState(false);
+  const [showDeploymentManagement, setShowDeploymentManagement] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -278,6 +280,9 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
         break;
       case 'theme':
         setShowThemeSelector(true);
+        break;
+      case 'deployment':
+        setShowDeploymentManagement(true);
         break;
       case 'admin':
         // Show admin menu or modal
@@ -552,6 +557,14 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
                   <Bell className="w-4 h-4 mr-2" />
                   Announcements
                 </Button>
+                <Button 
+                  variant="secondary" 
+                  className="justify-start h-10 sm:h-auto text-xs sm:text-sm"
+                  onClick={() => setShowDeploymentManagement(true)}
+                >
+                  <Server className="w-4 h-4 mr-2" />
+                  Deployment
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -637,6 +650,10 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
       <TransactionLimitsModal
         open={showTransactionLimits}
         onOpenChange={setShowTransactionLimits}
+      />
+      <DeploymentManagementModal
+        open={showDeploymentManagement}
+        onOpenChange={setShowDeploymentManagement}
       />
 
       {/* User Modals */}
