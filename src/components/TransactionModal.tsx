@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PinVerificationModal from "./PinVerificationModal";
 import PinSetupModal from "./PinSetupModal";
+import { HighValueVerificationModal } from "./HighValueVerificationModal";
 import { Send, ArrowDownLeft, AlertTriangle, DollarSign, Lock } from "lucide-react";
 
 interface TransactionModalProps {
@@ -47,15 +48,41 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
   const [showPinSetup, setShowPinSetup] = useState(false);
+  const [showHighValueVerification, setShowHighValueVerification] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const [hasPinSet, setHasPinSet] = useState(false);
+  const [highValueThreshold, setHighValueThreshold] = useState(1000);
+  const [verificationRequired, setVerificationRequired] = useState(true);
+  const [recipientName, setRecipientName] = useState("");
 
-  // Check if user has PIN set when modal opens
+  // Check if user has PIN set and load high-value settings when modal opens
   useEffect(() => {
     if (open && userId) {
       checkPinStatus();
+      loadHighValueSettings();
     }
   }, [open, userId]);
+
+  const loadHighValueSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['high_value_threshold', 'high_value_verification_required']);
+
+      if (!error && data) {
+        data.forEach(setting => {
+          if (setting.setting_key === 'high_value_threshold') {
+            setHighValueThreshold(parseFloat(setting.setting_value) || 1000);
+          } else if (setting.setting_key === 'high_value_verification_required') {
+            setVerificationRequired(setting.setting_value === 'true');
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading high-value settings:', error);
+    }
+  };
 
   const checkPinStatus = async () => {
     try {
@@ -114,8 +141,53 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     if (!hasPinSet) {
       setShowPinSetup(true);
     } else {
-      setShowPinVerification(true);
+      // Check if high-value verification is required
+      if (transactionType === 'send' && verificationRequired && transactionAmount >= highValueThreshold) {
+        // Resolve recipient name first for high-value modal
+        await resolveRecipientName(recipient);
+        setShowHighValueVerification(true);
+      } else {
+        setShowPinVerification(true);
+      }
     }
+  };
+
+  const resolveRecipientName = async (recipientInput: string) => {
+    try {
+      const isUuid = (v: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+      if (isUuid(recipientInput)) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('user_id', recipientInput)
+          .single();
+        setRecipientName(data?.full_name || data?.email || recipientInput);
+      } else if (recipientInput.includes('@')) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('email', recipientInput)
+          .single();
+        setRecipientName(data?.full_name || recipientInput);
+      } else {
+        setRecipientName(recipientInput);
+      }
+    } catch {
+      setRecipientName(recipientInput);
+    }
+  };
+
+  const handleHighValueVerified = () => {
+    // High-value verification passed, now proceed to PIN verification
+    setShowHighValueVerification(false);
+    setShowPinVerification(true);
+  };
+
+  const handleHighValueCancelled = () => {
+    setShowHighValueVerification(false);
+    setPendingTransaction(null);
   };
 
   const handlePinSetComplete = () => {
@@ -322,8 +394,13 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     setPendingTransaction(null);
     setShowPinVerification(false);
     setShowPinSetup(false);
+    setShowHighValueVerification(false);
+    setRecipientName("");
     onOpenChange(false);
   };
+
+  // Check if current amount is high-value
+  const isHighValue = parseFloat(amount) >= highValueThreshold && transactionType === 'send';
 
   return (
     <>
@@ -405,6 +482,17 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               />
             </div>
 
+            {/* High Value Warning */}
+            {isHighValue && verificationRequired && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>High-Value Transaction:</strong> This transfer exceeds ${highValueThreshold.toFixed(2)} 
+                  and will require additional verification.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Balance Warning for Send */}
             {transactionType === 'send' && amount && (
               <Alert>
@@ -471,6 +559,16 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         onBiometricVerify={handleBiometricVerification}
         isLoading={isLoading}
         enableBiometric={true}
+      />
+
+      {/* High Value Verification Modal */}
+      <HighValueVerificationModal
+        open={showHighValueVerification}
+        onOpenChange={setShowHighValueVerification}
+        amount={pendingTransaction?.amount || 0}
+        recipientName={recipientName}
+        onVerified={handleHighValueVerified}
+        onCancel={handleHighValueCancelled}
       />
     </>
   );
