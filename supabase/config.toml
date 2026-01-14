@@ -1,4 +1,10 @@
 project_id = "lnhuwbfyygbffpyelzfb"
 
 [functions.send-ticket-notification]
-verify_jwt = true
+verify_jwt = false
+
+[functions.github-webhook-deploy]
+verify_jwt = false
+
+[functions.high-value-alert]
+verify_jwt = false
