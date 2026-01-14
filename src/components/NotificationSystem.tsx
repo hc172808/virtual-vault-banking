@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, X, DollarSign, ArrowUpRight, ArrowDownLeft, Shield } from "lucide-react";
+import { Bell, X, DollarSign, ArrowUpRight, ArrowDownLeft, Shield, MessageCircle, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { usePushNotifications, sendLocalNotification } from "@/hooks/usePushNotifications";
+import { showNotification, isDocumentVisible, requestNotificationPermission } from "@/lib/notifications";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'transaction' | 'security' | 'system' | 'fund';
+  type: 'transaction' | 'security' | 'system' | 'fund' | 'chat' | 'payment_request';
   timestamp: Date;
   read: boolean;
   amount?: number;
@@ -30,13 +32,58 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  
+  // Initialize push notifications
+  const { 
+    isSupported: pushSupported, 
+    isRegistered, 
+    permissionStatus, 
+    registerForPush 
+  } = usePushNotifications(userId);
 
-  useEffect(() => {
-    if (userId) {
-      loadNotifications();
-      setupRealtimeSubscription();
+  // Send push/local notification for critical events
+  const triggerPushNotification = useCallback(async (
+    title: string, 
+    body: string, 
+    data?: Record<string, any>
+  ) => {
+    // Only send push when document is not visible (app in background)
+    if (!isDocumentVisible()) {
+      // Try native push first, then fall back to web notification
+      await sendLocalNotification(title, body, data);
+      
+      // Also try browser notification
+      showNotification(title, {
+        body,
+        tag: data?.type || 'notification',
+        data
+      });
     }
-  }, [userId]);
+  }, []);
+
+  // Request push permission on mount
+  useEffect(() => {
+    const initPushNotifications = async () => {
+      if (pushSupported && permissionStatus !== 'granted') {
+        const granted = await requestNotificationPermission();
+        setPushEnabled(granted);
+        if (granted) {
+          await registerForPush();
+        }
+      } else if (permissionStatus === 'granted') {
+        setPushEnabled(true);
+        await registerForPush();
+      }
+    };
+
+    if (userId) {
+      initPushNotifications();
+      loadNotifications();
+      const cleanup = setupRealtimeSubscription();
+      return cleanup;
+    }
+  }, [userId, pushSupported, permissionStatus]);
 
   const loadNotifications = async () => {
     try {
@@ -143,6 +190,13 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           description: newNotification.message,
           duration: 5000,
         });
+        
+        // Trigger push notification for transactions
+        triggerPushNotification(
+          newNotification.title,
+          newNotification.message,
+          { type: 'transaction', amount, transactionType }
+        );
       }
     }
   )
@@ -160,7 +214,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           filter: `recipient_id=eq.${userId}`,
         },
         async (payload) => {
-          const newRequest = payload.new;
+          const newRequest = payload.new as any;
           
           // Fetch sender info
           const { data: sender } = await supabase
@@ -169,11 +223,91 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
             .eq('user_id', newRequest.sender_id)
             .single();
 
+          const senderName = sender?.full_name || 'Someone';
+          const requestMessage = `${senderName} is requesting $${newRequest.amount}`;
+
+          // Add to notifications list
+          const paymentNotification: Notification = {
+            id: newRequest.id,
+            title: 'New Payment Request',
+            message: requestMessage,
+            type: 'payment_request',
+            timestamp: new Date(),
+            read: false,
+            amount: parseFloat(newRequest.amount),
+          };
+
+          setNotifications(prev => [paymentNotification, ...prev.slice(0, 19)]);
+          setUnreadCount(prev => prev + 1);
+
           toast({
-            title: "New Payment Request",
-            description: `${sender?.full_name || 'Someone'} is requesting $${newRequest.amount}`,
+            title: "💸 New Payment Request",
+            description: requestMessage,
             duration: 10000,
           });
+
+          // Trigger push notification for payment request
+          triggerPushNotification(
+            "💸 Payment Request",
+            requestMessage,
+            { type: 'payment_request', requestId: newRequest.id }
+          );
+        }
+      )
+      .subscribe();
+
+    // Listen for chat messages
+    const chatChannel = supabase
+      .channel('chat_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        async (payload) => {
+          const message = payload.new as any;
+          
+          // Check if this message is for the user's conversation
+          const { data: conversation } = await supabase
+            .from('chat_conversations')
+            .select('user_id, agent_id')
+            .eq('id', message.conversation_id)
+            .single();
+
+          if (!conversation) return;
+          
+          // Only notify if user is participant and not the sender
+          const isParticipant = conversation.user_id === userId || conversation.agent_id === userId;
+          const isSender = message.sender_id === userId;
+          
+          if (isParticipant && !isSender) {
+            const chatNotification: Notification = {
+              id: message.id,
+              title: message.is_agent ? 'Agent Message' : 'New Chat Message',
+              message: message.message.substring(0, 100) + (message.message.length > 100 ? '...' : ''),
+              type: 'chat',
+              timestamp: new Date(),
+              read: false,
+            };
+
+            setNotifications(prev => [chatNotification, ...prev.slice(0, 19)]);
+            setUnreadCount(prev => prev + 1);
+
+            toast({
+              title: "💬 New Message",
+              description: chatNotification.message,
+              duration: 5000,
+            });
+
+            // Trigger push notification for chat message
+            triggerPushNotification(
+              chatNotification.title,
+              chatNotification.message,
+              { type: 'chat_message', conversationId: message.conversation_id }
+            );
+          }
         }
       )
       .subscribe();
@@ -201,11 +335,12 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
           const senderName = senderProfile?.full_name || 'Someone';
           const amount = transaction.amount;
+          const notificationMessage = `${senderName} sent you $${parseFloat(amount).toFixed(2)} GYD`;
 
           // Show prominent toast notification for received payment
           toast({
             title: "💰 Payment Received!",
-            description: `${senderName} sent you $${parseFloat(amount).toFixed(2)} GYD`,
+            description: notificationMessage,
             duration: 8000,
           });
 
@@ -213,7 +348,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           const newNotification: Notification = {
             id: transaction.id,
             title: 'Payment Received',
-            message: `${senderName} sent you $${parseFloat(amount).toFixed(2)} GYD`,
+            message: notificationMessage,
             type: 'transaction',
             timestamp: new Date(),
             read: false,
@@ -223,6 +358,13 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
           setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
           setUnreadCount(prev => prev + 1);
+
+          // Trigger push notification for received payment
+          triggerPushNotification(
+            "💰 Payment Received!",
+            notificationMessage,
+            { type: 'transaction', amount: parseFloat(amount), transactionType: 'credit' }
+          );
         }
       )
       .subscribe();
@@ -230,6 +372,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(requestChannel);
+      supabase.removeChannel(chatChannel);
       supabase.removeChannel(transactionChannel);
     };
   };
@@ -266,6 +409,10 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
         return <DollarSign className="w-4 h-4 text-primary" />;
       case 'security':
         return <Shield className="w-4 h-4 text-warning" />;
+      case 'chat':
+        return <MessageCircle className="w-4 h-4 text-primary" />;
+      case 'payment_request':
+        return <ArrowDownLeft className="w-4 h-4 text-orange-500" />;
       default:
         return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
@@ -285,12 +432,13 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Notification Bell */}
+      {/* Notification Bell with Push Status Indicator */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setShowNotifications(!showNotifications)}
         className="relative"
+        title={pushEnabled ? 'Push notifications enabled' : 'Push notifications disabled'}
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -300,6 +448,12 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
+        )}
+        {/* Push notification status indicator */}
+        {pushSupported && (
+          <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${
+            pushEnabled ? 'bg-green-500' : 'bg-orange-500'
+          }`} />
         )}
       </Button>
 
