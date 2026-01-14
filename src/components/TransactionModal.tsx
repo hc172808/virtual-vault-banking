@@ -249,6 +249,48 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     setPendingTransaction(null);
   };
 
+  const sendHighValueAlert = async (transactionData: {
+    sender_id: string;
+    sender_name: string;
+    sender_email: string;
+    recipient_id: string;
+    recipient_name: string;
+    recipient_email: string;
+    amount: number;
+    description: string | null;
+  }) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        console.error('No session for high-value alert');
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/high-value-alert`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(transactionData),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('High-value alert failed:', error);
+      } else {
+        console.log('High-value alert sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending high-value alert:', error);
+    }
+  };
+
   const processTransaction = async (transaction: any) => {
     setIsLoading(true);
     try {
@@ -320,13 +362,24 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
 
       let recipientId = '';
       let recipientLabel = recipient;
+      let recipientEmail = '';
 
       if (isUuid(recipient)) {
         recipientId = recipient;
+        // Fetch recipient details for high-value alert
+        const { data: recData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('user_id', recipient)
+          .single();
+        if (recData) {
+          recipientLabel = recData.full_name || recipient;
+          recipientEmail = recData.email || '';
+        }
       } else if (recipient.includes('@')) {
         const { data: rec, error: recErr } = await supabase
           .from('profiles')
-          .select('user_id, full_name')
+          .select('user_id, full_name, email')
           .eq('email', recipient)
           .maybeSingle();
         if (recErr) throw recErr;
@@ -340,6 +393,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         }
         recipientId = rec.user_id as string;
         recipientLabel = rec.full_name || recipient;
+        recipientEmail = rec.email || recipient;
       } else {
         toast({
           title: 'Invalid recipient',
@@ -360,6 +414,30 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       const result = data as any;
       if (!result?.success) {
         throw new Error(result?.error || 'Transfer failed');
+      }
+
+      // Send high-value alert if transaction exceeds threshold
+      if (amount >= highValueThreshold && verificationRequired) {
+        // Fetch sender info for the alert
+        const { data: senderData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('user_id', userId)
+          .single();
+
+        if (senderData) {
+          // Fire and forget - don't block the transaction completion
+          sendHighValueAlert({
+            sender_id: userId,
+            sender_name: senderData.full_name || 'Unknown',
+            sender_email: senderData.email || 'Unknown',
+            recipient_id: recipientId,
+            recipient_name: recipientLabel,
+            recipient_email: recipientEmail,
+            amount,
+            description: description || null,
+          });
+        }
       }
 
       toast({

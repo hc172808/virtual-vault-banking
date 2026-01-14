@@ -59,6 +59,7 @@ import { CreateUserModal } from "./admin/CreateUserModal";
 import { TransactionLimitsModal } from "./admin/TransactionLimitsModal";
 import { HighValueVerificationModal } from "./HighValueVerificationModal";
 import { DeploymentManagementModal } from "./admin/DeploymentManagementModal";
+import BlockchainStatusIndicator from "./BlockchainStatusIndicator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Building2, Gauge, UserPlus, SendHorizontal, Server } from "lucide-react";
 
@@ -333,6 +334,7 @@ const SimpleBankingApp: React.FC<SimpleBankingAppProps> = ({ user }) => {
             </p>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-end">
+            <BlockchainStatusIndicator />
             <NavigationMenu userRole={profile.role} onMenuItemClick={handleMenuItemClick} />
             <NotificationSystem userId={user?.id || ''} />
             <Button 
