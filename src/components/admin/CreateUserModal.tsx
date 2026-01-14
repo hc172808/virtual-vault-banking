@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, Mail, Lock, User, Shield } from "lucide-react";
@@ -66,57 +65,42 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
     setLoading(true);
     try {
-      // Create user via Supabase Auth Admin API (requires service role)
-      // Since we don't have service role access from frontend, we'll create via signup
-      // and then update their profile
-      
-      // For now, we'll just create a profile entry that can be claimed
-      // In production, this would go through an edge function with service role
-      
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
+      // Get the current session for auth header
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-      if (existingUser) {
-        toast({
-          title: "Error",
-          description: "A user with this email already exists",
-          variant: "destructive",
-        });
-        return;
+      if (!accessToken) {
+        throw new Error('Not authenticated');
       }
 
-      // Create user account via admin function
-      // This requires an edge function in production
-      // For now, simulate by creating a placeholder
-      
-      const placeholderUserId = crypto.randomUUID();
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: placeholderUserId,
-          email: email,
-          full_name: fullName,
-          role: role,
-          balance: parseFloat(initialBalance) || 0,
-        });
+      // Call the edge function to create user with service role
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            full_name: fullName,
+            role,
+            initial_balance: parseFloat(initialBalance) || 0,
+          }),
+        }
+      );
 
-      if (profileError) throw profileError;
+      const result = await response.json();
 
-      // Log the creation
-      const { data: currentUser } = await supabase.auth.getUser();
-      await supabase.from('activity_logs').insert({
-        user_id: currentUser.user?.id,
-        action_type: 'USER_CREATED',
-        description: `Admin created new user: ${email} with role ${role}`,
-      });
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create user');
+      }
 
       toast({
         title: "Success",
-        description: `User ${email} created successfully. They can set their password via the signup flow.`,
+        description: `User ${email} created successfully with role ${role}`,
       });
 
       // Reset form
